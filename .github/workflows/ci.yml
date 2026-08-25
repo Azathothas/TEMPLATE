@@ -1,0 +1,255 @@
+# The template's own gates.
+#
+# This repository makes claims about hosts it cannot see, so it runs its checks
+# on three of them. Every step is separate, so the log names WHICH one failed
+# rather than reporting one failure for a dozen checks, and every check is run
+# unpiped so an exit code is the check's own.
+#
+# ⭐ Written to be read by an agent fixing a failure: each step's name says what
+# it proves, and each failure message names the file and the rule.
+#
+# ⛔ Third-party actions are pinned to a COMMIT, not a tag. A tag moves, and a
+# moved tag runs code nobody reviewed with the permissions granted here. To
+# re-resolve one after a bump:
+#
+#   gh api repos/actions/checkout/git/ref/tags/v7 --jq .object.sha
+#
+# ⚠ AND CHECK WHAT RUNTIME THE TAG DECLARES, not merely that it resolves.
+# A pinned action whose Node runtime GitHub has deprecated keeps running, with
+# a warning nobody reads, until the day it does not. v4 targets Node 20 and was
+# being force-run on Node 24 here before this was noticed:
+#
+#   gh api repos/actions/checkout/contents/action.yml --jq .content | base64 -d | grep using:
+#
+# ⭐ The durable fix is not vigilance, it is .github/dependabot.yml. Pinning
+# without an updater is how a pin becomes a fossil.
+
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# Least privilege. No job here needs more than reading the tree.
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  # ── the POSIX half: every check, on the host they are written for ─────────
+  checks:
+    name: checks (ubuntu)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # ⚠ THE EXIT CODE IS CAPTURED, NOT ECHOED AFTER THE FACT. This step used
+      # to run the probe and then `echo "exit=$?"`. GitHub runs `run:` under
+      # `bash -e`, so a non-zero probe aborts the step before the echo, and the
+      # echo could therefore only ever print 0. It read like a verification and
+      # asserted nothing.
+      - name: the probe runs and exits 0
+        run: |
+          set +e
+          sh scripts/doctor/doctor.sh --fast >/dev/null
+          rc=$?
+          set -e
+          echo "probe exit=$rc"
+          [ "$rc" = 0 ]
+
+      - name: every shell script parses
+        run: |
+          fail=0
+          for f in $(git ls-files '*.sh'); do
+            if sh -n "$f"; then echo "ok   $f"; else echo "FAIL $f"; fail=1; fi
+          done
+          exit $fail
+
+      - name: shellcheck
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck
+          fail=0
+          for f in $(git ls-files '*.sh'); do
+            if shellcheck -s sh "$f"; then echo "clean $f"; else fail=1; fi
+          done
+          exit $fail
+
+      - name: documents resolve and match the prose rule
+        run: sh scripts/common/check-docs.sh
+
+      - name: no template placeholder survived into a real file
+        run: sh scripts/common/check-placeholders.sh
+
+      - name: no literal control byte in any text file
+        run: sh scripts/common/check-control-bytes.sh
+
+      # ⚠ Exit 2 means "could not run", and this repository has no CHANGELOG.md
+      # of its own, so 2 is the expected answer here and it is not a failure.
+      # A project that starts from this template and adds one gets the real
+      # check for free. ⛔ The exit code is read from the process that produced
+      # it: `|| true` would hide a genuine exit 1 as well.
+      # ⛔ `set +e` AROUND IT, AND THAT IS NOT DECORATION. GitHub runs every
+      # `run:` block under `bash -e`, so `check; rc=$?` never reaches the
+      # assignment: the shell aborts on the non-zero exit first, and the step
+      # fails on the exit 2 this step exists to tolerate. Written without it,
+      # this step failed CI on its first run. The same shape is why the probe
+      # step above captures rather than echoes.
+      - name: the changelog rules, where there is a changelog
+        run: |
+          set +e
+          sh scripts/common/check-changelog.sh
+          rc=$?
+          set -e
+          if [ "$rc" = 0 ] || [ "$rc" = 2 ]; then echo "ok (exit $rc)"; exit 0; fi
+          exit "$rc"
+
+      - name: nothing publishable carries a secret or a fingerprint
+        run: sh scripts/common/check-no-secrets.sh --public
+
+      - name: line endings match .gitattributes
+        run: |
+          bad=$(git ls-files --eol | grep -v 'i/lf' | grep -v 'i/-text' || true)
+          if [ -n "$bad" ]; then echo "$bad"; exit 1; fi
+          echo "clean"
+
+      - name: every licence text is intact and fillable
+        run: |
+          fail=0
+          for id in MIT Apache-2.0 BSD-2-Clause BSD-3-Clause 0BSD Unlicense CC0-1.0 MPL-2.0; do
+            if sh scripts/common/fill-license.sh --id "$id" --holder "CI Check" --year 2026 --out /tmp/L; then
+              echo "ok   $id"
+            else
+              echo "FAIL $id"; fail=1
+            fi
+          done
+          # ⛔ These four MUST refuse. The GPL family's copyright line belongs to
+          # the FSF, and SPDX's ISC text carries Internet Systems Consortium's.
+          # A version that stopped refusing would silently corrupt an attribution.
+          for id in GPL-3.0-only AGPL-3.0-only LGPL-3.0-only ISC; do
+            if sh scripts/common/fill-license.sh --id "$id" --holder "CI Check" --out /tmp/L 2>/dev/null; then
+              echo "FAIL $id was filled in; it must be refused"; fail=1
+            else
+              echo "ok   $id correctly refused"
+            fi
+          done
+          exit $fail
+
+      - name: yaml parses
+        run: |
+          python3 -c "
+          import sys, glob
+          try:
+              import yaml
+          except ImportError:
+              sys.exit('pyyaml missing')
+          bad = 0
+          for f in glob.glob('**/*.yml', recursive=True):
+              try:
+                  yaml.safe_load(open(f, encoding='utf-8'))
+                  print('ok  ', f)
+              except Exception as e:
+                  print('FAIL', f, e); bad = 1
+          sys.exit(bad)
+          "
+
+  # ── the Windows half: the probe's twin, on the host it exists for ─────────
+  windows:
+    name: probe twin (windows)
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: doctor.ps1 parses
+        shell: pwsh
+        run: |
+          $errs = $null; $tokens = $null
+          $null = [System.Management.Automation.Language.Parser]::ParseFile(
+            (Resolve-Path .\scripts\doctor\doctor.ps1).Path, [ref]$tokens, [ref]$errs)
+          if ($errs.Count -gt 0) {
+            $errs | ForEach-Object { Write-Output ("line " + $_.Extent.StartLineNumber + ": " + $_.Message) }
+            exit 1
+          }
+          Write-Output "parses clean"
+
+      - name: doctor.ps1 runs and emits valid json
+        shell: pwsh
+        run: |
+          pwsh -NoProfile -File scripts\doctor\doctor.ps1 -Json > ps.json
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          $d = Get-Content ps.json -Raw | ConvertFrom-Json
+          if ($d.schema -ne 'agent-doctor/1') { Write-Output "wrong schema: $($d.schema)"; exit 1 }
+          Write-Output ("schema " + $d.schema + ", " + $d.tools.Count + " tools")
+
+      # ⭐ THE POINT OF THIS JOB. Every check in scripts/common/ has a
+      # PowerShell twin because the sh one cannot be assumed to run on Windows:
+      # a native PowerShell session may have no `sed` at all, and its `sort` is
+      # an alias for Sort-Object, which succeeds and answers differently.
+      # ⛔ Running them on ubuntu with pwsh would prove nothing about that. They
+      # run HERE, on the host they exist for.
+      - name: every check's PowerShell twin runs on Windows
+        shell: pwsh
+        run: |
+          $fail = 0
+          $checks = @(
+            @{ f = 'check-docs.ps1';           a = @() },
+            @{ f = 'check-placeholders.ps1';   a = @() },
+            @{ f = 'check-control-bytes.ps1';  a = @() },
+            @{ f = 'check-no-secrets.ps1';     a = @('-Public') }
+          )
+          foreach ($c in $checks) {
+            & pwsh -NoProfile -File ".\scripts\common\$($c.f)" @($c.a)
+            if ($LASTEXITCODE -ne 0) { Write-Output "FAIL $($c.f) exit $LASTEXITCODE"; $fail = 1 }
+            else { Write-Output "ok   $($c.f)" }
+          }
+          # ⚠ 2 is "could not run" and is the expected answer where this
+          # repository has no CHANGELOG.md of its own. It is not a pass and it
+          # is not a failure.
+          & pwsh -NoProfile -File .\scripts\common\check-changelog.ps1
+          if ($LASTEXITCODE -notin 0, 2) { Write-Output "FAIL check-changelog.ps1"; $fail = 1 }
+          else { Write-Output "ok   check-changelog.ps1 (exit $LASTEXITCODE)" }
+          exit $fail
+
+      - name: every licence text is intact and fillable, from PowerShell
+        shell: pwsh
+        run: |
+          $fail = 0
+          foreach ($id in 'MIT','Apache-2.0','BSD-2-Clause','BSD-3-Clause','0BSD','Unlicense','CC0-1.0','MPL-2.0') {
+            & pwsh -NoProfile -File .\scripts\common\fill-license.ps1 -Id $id -Holder 'CI Check' -Year 2026 -Out "$env:TEMP\L"
+            if ($LASTEXITCODE -ne 0) { Write-Output "FAIL $id"; $fail = 1 } else { Write-Output "ok   $id" }
+          }
+          # ⛔ These four MUST refuse, in this implementation as much as in the
+          # sh one. A twin that stopped refusing would silently corrupt an
+          # attribution on exactly the hosts nobody tests on.
+          foreach ($id in 'GPL-3.0-only','AGPL-3.0-only','LGPL-3.0-only','ISC') {
+            & pwsh -NoProfile -File .\scripts\common\fill-license.ps1 -Id $id -Holder 'CI Check' -Out "$env:TEMP\L" 2>$null
+            if ($LASTEXITCODE -eq 0) { Write-Output "FAIL $id was filled in; it must be refused"; $fail = 1 }
+            else { Write-Output "ok   $id correctly refused" }
+          }
+          exit $fail
+
+      - name: PSScriptAnalyzer
+        shell: pwsh
+        run: |
+          Install-Module PSScriptAnalyzer -Force -Scope CurrentUser -ErrorAction Stop
+          $r = Invoke-ScriptAnalyzer -Path .\scripts -Recurse -Severity Error, Warning
+          if ($r) { $r | Format-Table -AutoSize | Out-String | Write-Output; exit 1 }
+          Write-Output "clean"
+
+  # ── the twins must agree. This is the job the drift rule exists for ───────
+  twins:
+    name: the two probes agree
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: both probes, same machine, compared field by field
+        shell: bash
+        run: sh scripts/common/check-twins.sh

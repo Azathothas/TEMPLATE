@@ -1,0 +1,73 @@
+# Base ignores. Applies to every project regardless of ecosystem.
+# Combine with the ecosystem file from dotfiles/<ecosystem>/gitignore and with
+# dotfiles/os-editor/gitignore.
+#
+# ⛔ .gitignore only applies to files git is not ALREADY tracking. Adding a line
+# does not untrack what is already in. Check with: git ls-files
+
+# ── secrets. Never committed, no exceptions ─────────────────────────────────
+# ⛔ Listed BEFORE the files exist, so one can never be staged by accident.
+# A credential file added here after the fact was trackable in between.
+.env
+.env.*
+!.env.example
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.keystore
+id_rsa
+id_ed25519
+credentials.json
+service-account*.json
+*.token
+.*_token
+.*-token
+
+# ── scratch and temporary work ─────────────────────────────────────────────
+.tmp/
+tmp/
+scratch/
+.scratch/
+
+# ── logs ────────────────────────────────────────────────────────────────────
+*.log
+logs/
+
+# ── local databases ─────────────────────────────────────────────────────────
+*.sqlite
+*.sqlite3
+*.sqlite-journal
+*.sqlite-wal
+*.db-shm
+*.db-wal
+
+# ── coverage and test output ───────────────────────────────────────────────
+coverage/
+.coverage
+htmlcov/
+test-results/
+.nyc_output/
+
+# ── agent and assistant local files ────────────────────────────────────────
+.claude/settings.local.json
+CLAUDE.local.md
+.aider*
+.cursorignore
+
+# ── reference material cloned for study ────────────────────────────────────
+# The trees are re-clonable from the URL every write-up records. The DERIVED
+# write-up is tracked; the clone is not. See docs/methodology/references.md.
+reference/
+references/
+reference_attachments/
+temp/
+
+# ⛔ A Windows RESERVED DEVICE NAME. Redirecting to /dev/null under a shell that
+# does not map it creates a real file called nul, which git then tracks, which
+# breaks git stash outright, and which cannot be deleted by rm or by Python.
+# Ignoring it is what stops the recurrence.
+nul
