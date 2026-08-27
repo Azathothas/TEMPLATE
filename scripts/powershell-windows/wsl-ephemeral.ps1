@@ -84,8 +84,8 @@ $ErrorActionPreference = 'Stop'
 $UpstreamOwner = 'Azathothas'
 $UpstreamRepo  = 'ToolKit'
 $UpstreamPath  = 'scripts/powershell-windows/wsl-ephemeral.ps1'
-$PinnedRef     = '88c00cd39a83a0762d16831f0783c6b5f7388bf6'
-$PinnedSha256  = '4c13905f35f898a5d883ea653c8d8cb0273d9e1ca9e52b1dc18d71357ff23938'
+$PinnedRef     = 'ea5d483100218912151bb14d08e720aeec2f0c09'
+$PinnedSha256  = '3c901625b695e1e9d1bada0d289d2651d4a81d8461b9d7516efaf2744c50d876'
 
 function Write-Step { param([string]$Message) Write-Host "==> $Message" -ForegroundColor Cyan }
 function Write-Warn { param([string]$Message) Write-Host "  ! $Message" -ForegroundColor Yellow }
