@@ -116,7 +116,7 @@ are plausible and wrong**, which is the hardest kind to catch.
 | patch one exact string in a file | `write-file.mjs replace --expect N` | `sed -i`, which reports success over a no-op |
 | commit and push | `git-sync.sh`, or ⭐ `git-sync.ps1` on Windows | `git commit` directly, which enforces none of the rules |
 | run any check on Windows | ⭐ the `.ps1` half of the pair | the `.sh` half. ⚠ Native PowerShell may have no `sed`, and its `sort` is an alias for `Sort-Object`, which succeeds and answers differently. |
-| run something on Linux from a Windows host | `scripts/powershell-windows/wsl-ephemeral.ps1` | installing a distro by hand and leaving it there |
+| run something on Linux from a Windows host | `scripts/powershell-windows/wsl-ephemeral.ps1`, the wrapper. ⚠ It fetches a pinned commit from `Azathothas/ToolKit` and needs network on first use. | installing a distro by hand and leaving it there |
 | {{understand code, find callers, see the blast radius}} | {{the indexed call graph, if this project has one}} | {{grep as the first move}} |
 | {{know the current state of the tree and the deployment}} | {{the state command}} | {{re-deriving it by hand}} |
 | {{know whether the checks pass}} | {{the gate command}} | {{running some of them}} |

@@ -19,7 +19,7 @@
 # check-control-bytes.ps1, which reads every text file. Run both.
 #
 # It also enforces the mechanical half of the prose rule: no em dash, and no
-# emoji outside the three this repository defines. docs/conventions/prose.md is
+# emoji outside the five this repository defines. docs/conventions/prose.md is
 # the rule; this is the part a machine can hold.
 #
 # ⛔ WHAT IT DOES NOT CHECK IS WHETHER A CLAIM IS TRUE. That is a reading, and
@@ -249,7 +249,7 @@ foreach ($rel in $files) {
     }
 }
 
-# ── only the three defined markers ──────────────────────────────────────────
+# ── only the five defined characters ──────────────────────────────────────────
 # ⭐ .NET regex speaks unicode natively, so unlike the sh twin this rule never
 # has to degrade. The sh side needs a grep with -P in UTF-8 mode and says so
 # when it does not have one.
@@ -267,8 +267,14 @@ $ranges = @(
     @(0x2B00, 0x2BFF),
     @(0xFE0F, 0xFE0F)
 )
-# The three this repository defines, and nothing else. prose.md is the rule.
-$allowed = @(0x26D4, 0x2B50, 0x26A0)
+# The five this repository defines, and nothing else. prose.md is the rule:
+# three prose markers, then two status glyphs for machine output and result
+# tables. ⛔ Adding a sixth is a change to prose.md first, and to both twins.
+#
+# ⚠ This twin tests one CHARACTER at a time, so it never had the line-level
+# false negative the sh twin was carrying. Keep it that way: a per-line test
+# here would hide a banned emoji sitting beside an allowed marker.
+$allowed = @(0x26D4, 0x2B50, 0x26A0, 0x2705, 0x274C)
 foreach ($rel in $files) {
     $full = Join-Path $root $rel
     if (-not (Test-Path -LiteralPath $full -PathType Leaf)) { continue }
@@ -290,7 +296,7 @@ foreach ($rel in $files) {
                 if ($cp -ge $r[0] -and $cp -le $r[1]) {
                     $shown = $line
                     if ($shown.Length -gt 90) { $shown = $shown.Substring(0, 90) }
-                    Add-Problem ('an emoji outside the three defined markers: ' + $rel + ':' + $n + ':' + $shown)
+                    Add-Problem ('an emoji outside the five defined characters: ' + $rel + ':' + $n + ':' + $shown)
                     break
                 }
             }

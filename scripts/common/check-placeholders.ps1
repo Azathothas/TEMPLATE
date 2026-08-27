@@ -107,8 +107,23 @@ foreach ($rel in $files) {
         #    shape, and this rule fired on one the day such a script arrived.
         #    ⭐ Narrowed rather than switched off, on a shape that cannot
         #    collide: every placeholder this template ships is a word or a
-        #    sentence and none begins with a dot. Go field access always does.
-        if ($line -match '\{\{' -and $line -notmatch '\$\{\{' -and $line -notmatch '\{\{\.') {
+        #    sentence and every one begins with an UPPERCASE letter.
+        # ⚠ EXCLUDING ONLY `{{.` WAS TOO NARROW. It fired on
+        #    `podman image inspect --format '{{json .Config.Env}}'`. A Go
+        #    template calls functions as well as reading fields, so `{{json`,
+        #    `{{range`, `{{printf`, `{{if` and `{{end}}` begin with a lowercase
+        #    letter. Excluding "a dot or a lowercase letter" covers every
+        #    docker, podman, helm and kubectl format string and still cannot
+        #    collide with an uppercase placeholder.
+        # ⛔ Keep this identical to the sh twin. check-twins is what notices.
+        # ⛔ `-cnotmatch`, NOT `-notmatch`. PowerShell's `-match` family is
+        #    CASE-INSENSITIVE, so `[a-z]` matches the `O` in `{{OPERATOR}}` and
+        #    the Go-template exclusion silently swallowed every real
+        #    placeholder. The check reported "no placeholders survived" over a
+        #    file containing one. Caught by planting a placeholder and reading
+        #    the exit code, which is the only reason it was caught at all.
+        #    docs/conventions/shell.md section 8.
+        if ($line -match '\{\{' -and $line -notmatch '\$\{\{' -and $line -cnotmatch '\{\{ *[a-z.]') {
             [void]$braceHits.Add("${rel}:${n}:$line")
         }
 

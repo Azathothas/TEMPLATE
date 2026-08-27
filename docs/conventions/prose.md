@@ -8,8 +8,8 @@ rest is a reading.
 ## The rule
 
 Short sentences. No em dashes. No marketing adjectives. No emoji beyond the
-three defined below. Present tense. Every claim backed by a command a reader
-can run or a path a reader can open.
+five defined below, and only three of those belong in prose. Present tense.
+Every claim backed by a command a reader can run or a path a reader can open.
 
 Write for an agent with no memory of the session that wrote the file, and for a
 person who is looking for one fact.
@@ -35,6 +35,41 @@ prevent. One marker or none.
 paragraph carries one has no markers at all. If a page needs more than a
 handful, the page is a rulebook pretending to be a summary and it should be
 split.
+
+---
+
+## Status glyphs are a second tier, and a different job
+
+⭐ **A semantic marker and a status glyph are not the same thing.** ⛔ means a
+rule whose violation is unrecoverable. A check reporting that one file of forty
+failed needs a pass or fail glyph, which denotes a state rather than a rule.
+
+The two tiers, and there is no third:
+
+| tier | the set | where it belongs | what it means |
+| --- | --- | --- | --- |
+| prose markers | ⛔ ⭐ ⚠ | documents | the table above. Sparing, and they do not stack. |
+| status glyphs | ✅ ❌ | machine output, result tables, checklists | passed, or failed. Nothing else. |
+
+⛔ **A status glyph never carries a rule, and a marker never reports a result.**
+With no glyph available an author reaches for ⛔ to mean "this one failed", and
+that is exactly the dilution the three-marker rule exists to prevent. Widening
+the set by two characters is what keeps the other three meaning what they say.
+
+⚠ **The list is two characters, not a principle, and that is deliberate.** The
+tempting version of this rule is "allow non-anthropomorphic symbols, forbid
+anthropomorphic ones", on the reasoning that faces and hands carry tone while a
+symbol denotes a state. The reasoning is right and the rule is unenforceable: no
+check can decide what is anthropomorphic, so the boundary would move every time
+somebody argued for one more glyph, and a vocabulary that grows stops meaning
+anything. An explicit five-character allowlist is something
+[`check-docs.sh`](../../scripts/common/check-docs.sh) can hold, and it holds it.
+
+⚠ **The linter owns the allowlist. It does not own the tiers.** Nothing
+mechanical can tell a result table from a paragraph, so a glyph used as a marker
+passes the check and fails the review. That split is the same one already true
+of sparingness, and it is why both are written here rather than only in the
+check.
 
 ---
 
@@ -135,7 +170,8 @@ check sees:
 3. **No literal control bytes.** Documentation about escape sequences has a
    proven habit of containing the character it is warning about.
 4. **Every relative link resolves**, and every cited path exists.
-5. **No em dash, no emoji outside the three, none of the banned vocabulary.**
+5. **No em dash, no emoji outside the five, none of the banned vocabulary.**
+   The five are the three prose markers plus the two status glyphs.
 6. **No page under the docs directory that nothing links to.**
 
 ⛔ **What a linter cannot check is whether a claim is true.** That is a reading,

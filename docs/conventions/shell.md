@@ -211,10 +211,55 @@ rather than warns, over every tracked text file.
 
 ## 7. Windows specifics
 
-- ⛔ **`nul` is a reserved device name.** `2>/dev/null` under a shell that does
-  not map `/dev/null` creates a real file called `nul`, which git then tracks,
-  which breaks `git stash` outright, and which cannot be deleted by `rm` or by
-  Python. Put `nul` in `.gitignore` before it happens.
+- ⭐ **Git Bash rewrites arguments that look like POSIX paths.** Anything with a
+  leading slash is converted to a Windows path before the target process sees
+  it. When the target is not a Windows program, the rewrite is corruption, it
+  is silent, and the error never names the cause. Measured on 2026-08-26:
+
+  ```bash
+  gh api /repos/OWNER/NAME/actions/workflows
+  ```
+
+  ```text
+  invalid API endpoint: "C:/Program Files/Git/repos/OWNER/NAME/actions/workflows".
+  ```
+
+  `gh` happens to detect it and say so. Almost nothing else does: a container
+  runtime receives the rewritten path as a real argument and acts on it.
+
+  Two variables turn it off, and they cover different things. `MSYS_NO_PATHCONV`
+  disables the leading-path heuristic; `MSYS2_ARG_CONV_EXCL` is a per-argument
+  exclusion list, and `'*'` excludes everything. ⛔ **Any command whose POSIX
+  paths are destined for a non-Windows process carries both:**
+
+  ```bash
+  MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL='*' podman run --rm alpine ls /etc
+  ```
+
+  ⚠ This is the root cause behind the reserved-name bullet below, which is why
+  the two are next to each other.
+- ⛔ **The Windows reserved device names are `CON`, `PRN`, `AUX`, `NUL`, `COM1`
+  to `COM9` and `LPT1` to `LPT9`**, in any case and with any extension. Two
+  different triggers create one as a real file, and the second is the one nobody
+  expects:
+
+  1. **Your own redirect.** `2>/dev/null` under a shell that does not map
+     `/dev/null` creates a file called `nul`, which git then tracks, which
+     breaks `git stash` outright, and which cannot be deleted by `rm` or by
+     Python.
+  2. ⚠ **A tool's own argument list.** `podman machine ssh` on Windows passes
+     `-o UserKnownHostsFile=NUL` to its own ssh invocation. Under Git Bash that
+     is a filename, not the null device, so a 99-byte `NUL` holding an ssh host
+     key appears in whatever directory the command ran in. Measured on
+     2026-08-27 with `MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL='*'` already set:
+     **the prefix above does not prevent this one**, because the argument never
+     looked like a path.
+
+  ⚠ The two differ in recoverability, so do not assume the worse case is the
+  only case. The `NUL` written by trigger 2 was removed by `rm` on the same
+  machine; the lowercase `nul` from trigger 1 was not. Put the whole reserved
+  set in `.gitignore` before any of it happens, because the directory it lands
+  in is usually a repository.
 - ⚠ **`/tmp` is not one directory.** Git Bash resolves it inside the msys root;
   a native Windows Python or PowerShell resolves it somewhere else entirely, or
   not at all. A file written by one and read by the other is not found. Use a
@@ -232,6 +277,48 @@ rather than warns, over every tracked text file.
 - ⚠ **A release binary left running holds its own executable open**, and the
   next build fails on a locked file with an error naming neither. Kill stray
   processes before rebuilding.
+- ⛔ **Python on Windows cannot print this repository's own markers.** stdout
+  defaults to cp1252, which has no ⛔, no ⭐ and no ⚠. Measured on 2026-08-27,
+  Python 3.13.15:
+
+  ```bash
+  python -c "print('⛔')"
+  ```
+
+  ```text
+  UnicodeEncodeError: 'charmap' codec can't encode character '⛔'
+  in position 0: character maps to undefined
+  ```
+
+  ⭐ Note what the error itself does: it names the character as a codepoint,
+  because it cannot print it either.
+
+  ⚠ The failure is at print time, so it passes every test that captures output
+  and fails the moment a person runs it at a console. Any script that echoes a
+  marker sets `PYTHONIOENCODING=utf-8` or calls
+  `sys.stdout.reconfigure(encoding='utf-8')` before printing. Where the encoding
+  is not yours to control, print the codepoint instead of the character.
+- ⛔ **A byte class is not a character class, and the wrong one is silently
+  wrong.** `grep -o '[^\x00-\x7F]'` returns per-byte fragments, so a three-byte
+  marker counts as three separate entries and the total is wrong in a way that
+  looks like real output. Measured on 2026-08-27 over a file holding exactly one
+  ⛔ and one ⚠:
+
+  | tool | answer |
+  | --- | --- |
+  | `grep -o '[^\x00-\x7F]'` | 6 fragments, none of them a character |
+  | `rg -o '[^\x00-\x7F]'` | `1 ⚠`, `1 ⛔` |
+
+  ⚠ **Setting `LC_ALL=C` does not rescue the first row**, and assuming it does
+  is the trap. On the measured machine `LANG` was already empty, so `LC_ALL=C`
+  changed nothing at all. The fix is choosing the right tool, not the locale.
+
+  ⛔ **A check states which of the two jobs it is doing**, because the same
+  expression is correct for one and quietly wrong for the other. Counting bytes
+  is byte-oriented and belongs to a byte tool. Counting characters is
+  character-oriented and needs a Unicode-aware one. This matters most to
+  [`check-control-bytes.sh`](../../scripts/common/check-control-bytes.sh),
+  whose whole subject is bytes that review tools misreport.
 
 ---
 

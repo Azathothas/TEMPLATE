@@ -96,9 +96,20 @@ REPORT=""
 #    shape, and this rule fired on one the day a script using it arrived.
 #    ⭐ Narrowed rather than switched off, and narrowed on a shape that cannot
 #    collide: every placeholder this template ships is a word or a sentence,
-#    and NONE of them begins with a dot. Go field access always does.
+#    and every one of them begins with an UPPERCASE letter.
+# ⚠ EXCLUDING ONLY `{{.` WAS TOO NARROW, and the gap is not hypothetical: it
+#    fired on `podman image inspect --format '{{json .Config.Env}}'` in this
+#    repository's own documentation. A Go template calls functions as well as
+#    reading fields, so `{{json .X}}`, `{{range .X}}`, `{{printf ...}}`,
+#    `{{if .X}}` and `{{end}}` all begin with a lowercase letter instead. The
+#    exclusion is therefore "a dot or a lowercase letter", which still cannot
+#    collide with a placeholder, and it covers every docker, podman, helm and
+#    kubectl format string rather than only field access.
+# ⚠ The cost of the wider rule: a placeholder written in lowercase would be
+#    missed. None is, the convention is uppercase, and the ⭐ marker rule in
+#    docs/conventions/prose.md is the same kind of explicit-list trade.
 BRACE=$(printf '%s\n' "$FILES" | tr '\n' '\0' | xargs -0 grep -nI '{{' 2>/dev/null \
-  | grep -v '\${{' | grep -v '{{\.' || true)
+  | grep -v '\${{' | grep -vE '\{\{ *[a-z.]' || true)
 if [ -n "$BRACE" ]; then
   COUNT=$((COUNT + 1))
   REPORT="$REPORT

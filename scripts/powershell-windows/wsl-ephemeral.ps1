@@ -1,52 +1,39 @@
-﻿<#
+#Requires -Version 5.1
+
+<#
 .SYNOPSIS
-    Create, use, and destroy ephemeral WSL2 distros on demand.
+    Wrapper. Runs wsl-ephemeral.ps1 from Azathothas/ToolKit with the arguments
+    given here.
 
 .DESCRIPTION
-    Builds throwaway WSL2 distros from OCI images (any distro, any tag available on a
-    container registry) or from a local rootfs tarball, runs commands inside them, and
-    removes them cleanly.
+    The implementation moved to https://github.com/Azathothas/ToolKit so that
+    this template keeps only what every project needs. This file stays behind so
+    existing callers keep working: every argument is passed through unchanged and
+    the inner script's exit code is propagated.
 
-    SAFETY MODEL -- this script is destructive by nature, so removal is constrained four ways:
-      1. Every distro it creates is named with a fixed prefix (default 'eph-').
-      2. It REFUSES to remove any distro whose name lacks that prefix.
-      3. It REFUSES to remove any name on an explicit protected list, prefix or not.
-         'podman-machine-default' and the Docker Desktop distros are protected, so a
-         mistake here cannot destroy your container runtime.
-      4. Directory deletion is confined to %LOCALAPPDATA%\wsl-ephemeral\<distro>; the base
-         directory itself and anything outside it can never be the target.
+    HOW IT FETCHES, AND WHY IT IS SHAPED THIS WAY
 
-    Destructive actions require -Force when running non-interactively.
+    This wrapper downloads code and then runs it. That is a supply chain, so it
+    is pinned exactly the way this repository pins a third-party GitHub Action,
+    and for the same reason: a moving reference runs code nobody reviewed.
 
-.PARAMETER Action
-    New     Create an ephemeral distro (from -Image or -Tarball).
-    Run     Run a command inside an existing ephemeral distro.
-    List    List ephemeral distros, and show what else exists (never touched).
-    Remove  Unregister one ephemeral distro and delete its disk.
-    Purge   Remove ALL ephemeral distros (prefix-matched only).
+      1. The URL names an immutable COMMIT, never a branch and never a tag.
+         A branch moves. A tag can be pushed over.
+      2. The downloaded bytes are checked against a pinned SHA-256 before
+         anything executes. A digest mismatch is a hard stop, not a warning.
+      3. The file is parsed as PowerShell before it is run, so a captive portal
+         or a 404 page cannot reach the execution path even when verification
+         was deliberately turned off.
+      4. The cache key includes the ref, so changing the pin can never serve a
+         stale copy of the old one.
 
-.PARAMETER Image
-    OCI image reference, e.g. 'alpine:3.22', 'debian:bullseye-slim', 'fedora:44',
-    'archlinux:latest', 'opensuse/tumbleweed', 'rockylinux:9', 'voidlinux/voidlinux'.
+    Nothing here weakens on failure. No network and no cache is an error with a
+    message, never a silent skip.
 
-.PARAMETER Tarball
-    Path to a rootfs tarball (.tar / .tar.gz) to import instead of pulling an image.
-    Lets the script work with no container engine installed.
-
-.PARAMETER Name
-    Distro name. Auto-generated when omitted. The prefix is added if missing.
-
-.PARAMETER Command
-    Shell command to run, via /bin/sh -lc.
-
-.PARAMETER User
-    User to run as inside the distro. Default 'root'.
-
-.PARAMETER Ephemeral
-    With -Action New: run -Command then immediately destroy the distro.
-
-.PARAMETER Force
-    Required for destructive actions when non-interactive. Skips confirmation.
+.PARAMETER Arguments
+    Not declared. Every argument is collected and forwarded verbatim, so this
+    wrapper never has to restate the inner script's parameter list. Restating it
+    is how a wrapper drifts from the thing it wraps.
 
 .EXAMPLE
     .\wsl-ephemeral.ps1 -Action New -Image alpine:3.22
@@ -55,502 +42,222 @@
     .\wsl-ephemeral.ps1 -Action New -Image debian:bullseye-slim -Command "ldd --version" -Ephemeral -Force
 
 .EXAMPLE
-    .\wsl-ephemeral.ps1 -Action Run -Name eph-alpine-3.22-a1b2 -Command "apk add gcc && gcc --version"
-
-.EXAMPLE
     .\wsl-ephemeral.ps1 -Action Purge -Force
 
 .NOTES
-    Requires : Windows 10 2004+ / Windows 11 with WSL2.
-    Optional : podman or docker (only for -Image).
-    Tested on: Windows PowerShell 5.1 and PowerShell 7+.
-#>
-# ── PSScriptAnalyzer, suppressed per rule with the reason ────────────────────
-# CI runs Invoke-ScriptAnalyzer over scripts/ at Error and Warning, so a
-# suppression here is the difference between a red gate and a green one. Each
-# is scoped to ONE rule and carries its justification. ⛔ Do not replace these
-# with a settings file that switches the rule off everywhere: that weakens the
-# gate for every future script to spare this one, which is how a check stops
-# checking.
-[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingWriteHost', '',
-    Justification = 'This is an interactive console tool. Its entire output is progress and a summary for a human at a terminal, which is the documented case for Write-Host. Nothing here is a value another script consumes: Run exits with the inner command''s code and callers read that.')]
-[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', '',
-    Justification = 'Image, Tarball, Command, User, Ephemeral and Force are read by the Invoke-Action* functions through script scope rather than as arguments. The analyzer does not follow that, and threading six parameters through every call to satisfy it would make the code worse.')]
-[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns', '',
-    Justification = 'Get-WslDistroNames returns the whole list and Export-ImageRootfs writes one rootfs whose name simply ends in s. Renaming either to satisfy the rule would make the name describe the thing less accurately.')]
-[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '',
-    Justification = 'Removal already goes through Confirm-Destructive, which refuses non-interactively unless -Force was passed. Adding ShouldProcess would give a second, differently spelled confirmation path over the same guard, and two confirmation mechanisms is how one of them gets bypassed.')]
-[CmdletBinding()]
-param(
-    [Parameter(Mandatory = $true)]
-    [ValidateSet('New', 'Run', 'List', 'Remove', 'Purge')]
-    [string]$Action,
+    Environment overrides, all optional:
 
-    [string]$Image,
-    [string]$Tarball,
-    [string]$Name,
-    [string]$Command,
-    [string]$User = 'root',
-    [switch]$Ephemeral,
-    [switch]$Force
-)
+      WSL_EPHEMERAL_LOCAL             run this local .ps1 instead. No network.
+                                      The development and air-gapped path.
+      WSL_EPHEMERAL_REF               fetch this git ref instead of the pin.
+      WSL_EPHEMERAL_SHA256            expect this digest instead of the pin.
+      WSL_EPHEMERAL_ALLOW_UNVERIFIED  set to 1 to run an overridden ref with no
+                                      digest. Prints a warning every time.
+      WSL_EPHEMERAL_CACHE             cache directory. Default is under
+                                      %LOCALAPPDATA%\wsl-ephemeral\cache.
+
+    To refresh the pin after the upstream script changes, read the two values
+    from the API rather than typing them:
+
+      gh api repos/Azathothas/ToolKit/commits/main --jq .sha
+      gh api repos/Azathothas/ToolKit/contents/scripts/powershell-windows/wsl-ephemeral.ps1?ref=REF --jq .content | base64 -d | sha256sum
+
+    Requires : Windows PowerShell 5.1 or PowerShell 7+.
+    ASCII-ONLY ON PURPOSE. docs/conventions/shell.md section 8: a .ps1 holding
+    any non-ASCII byte needs a UTF-8 BOM before 5.1 will decode it correctly.
+    Staying ASCII removes the requirement rather than depending on it.
+#>
+
+# CI runs Invoke-ScriptAnalyzer over scripts/ at Error and Warning. Each
+# suppression is scoped to one rule and carries its reason. Do not replace these
+# with a settings file that switches a rule off for every script.
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingWriteHost', '',
+    Justification = 'Progress and diagnostics for a human at a terminal, which is the documented case for Write-Host. Nothing here is a value another script consumes: the inner script''s exit code is propagated and callers read that.')]
+param()
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-# --------------------------------------------------------------------------------------
-# Constants
-# --------------------------------------------------------------------------------------
-$script:Prefix  = 'eph-'
-$script:BaseDir = Join-Path $env:LOCALAPPDATA 'wsl-ephemeral'
+# ---------------------------------------------------------------------------
+# The pin. Both values move together or not at all.
+# ---------------------------------------------------------------------------
+$UpstreamOwner = 'Azathothas'
+$UpstreamRepo  = 'ToolKit'
+$UpstreamPath  = 'scripts/powershell-windows/wsl-ephemeral.ps1'
+$PinnedRef     = '77596be12a8cddb9b636ec70e9faaa21c80fb359'
+$PinnedSha256  = '2a4f8fc453728302e338e7c499cd4f7da80d92be76c99744ae0c0c98f19e17c2'
 
-# Names that must NEVER be unregistered, even if somebody prefixes them.
-$script:Protected = @(
-    'podman-machine-default',
-    'docker-desktop',
-    'docker-desktop-data',
-    'rancher-desktop',
-    'rancher-desktop-data'
-)
-
-# WSL emits UTF-16LE unless this is set; without it every parsed string is NUL-riddled.
-$env:WSL_UTF8 = '1'
-
-# --------------------------------------------------------------------------------------
-# Output helpers
-# --------------------------------------------------------------------------------------
 function Write-Step { param([string]$Message) Write-Host "==> $Message" -ForegroundColor Cyan }
-function Write-Ok   { param([string]$Message) Write-Host "  * $Message" -ForegroundColor Green }
 function Write-Warn { param([string]$Message) Write-Host "  ! $Message" -ForegroundColor Yellow }
 
-# --------------------------------------------------------------------------------------
-# Process helpers
-# --------------------------------------------------------------------------------------
-function Invoke-Native {
+function Get-EnvOrDefault {
+    param([Parameter(Mandatory = $true)][string]$Name, [AllowEmptyString()][string]$Fallback = '')
+    $v = [Environment]::GetEnvironmentVariable($Name)
+    if ([string]::IsNullOrWhiteSpace($v)) { return $Fallback }
+    return $v.Trim()
+}
+
+function Assert-PowerShellSyntax {
     <#
-      Run a native exe, capture merged stdout+stderr, throw on non-zero exit.
-      $ErrorActionPreference is deliberately relaxed for the duration: with it set to
-      'Stop', PowerShell 7.3+ turns native stderr captured via 2>&1 into a terminating
-      NativeCommandError, which would misreport success as failure.
+      A downloaded file that is not PowerShell must never reach the execution
+      path. The realistic case is not a hostile payload, it is a captive portal
+      or a 404 body arriving with HTTP 200.
     #>
+    param([Parameter(Mandatory = $true)][string]$LiteralFile)
+    $errs = $null
+    $tokens = $null
+    $null = [System.Management.Automation.Language.Parser]::ParseFile($LiteralFile, [ref]$tokens, [ref]$errs)
+    if ($errs -and $errs.Count -gt 0) {
+        throw ("Downloaded file is not valid PowerShell (first error: line " +
+               $errs[0].Extent.StartLineNumber + ": " + $errs[0].Message + "). " +
+               "This usually means a proxy or a captive portal answered instead of GitHub.")
+    }
+}
+
+function Get-Sha256 {
+    param([Parameter(Mandatory = $true)][string]$LiteralFile)
+    return (Get-FileHash -LiteralPath $LiteralFile -Algorithm SHA256).Hash.ToLowerInvariant()
+}
+
+function Save-Upstream {
+    <# Download to a temp file in the destination directory, then rename. #>
     param(
-        [Parameter(Mandatory = $true)][string]$FilePath,
-        [string[]]$Arguments = @(),
-        [switch]$IgnoreExitCode
+        [Parameter(Mandatory = $true)][string]$Uri,
+        [Parameter(Mandatory = $true)][string]$Destination
     )
-    $prev = $ErrorActionPreference
-    $ErrorActionPreference = 'Continue'
+    $dir = Split-Path -Parent $Destination
+    if (-not (Test-Path -LiteralPath $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
+    $temp = Join-Path $dir ('.download.' + [Guid]::NewGuid().ToString('N') + '.tmp')
+
+    # Windows PowerShell 5.1 negotiates TLS 1.0 on some machines and GitHub
+    # refuses it, which surfaces as "The request was aborted: Could not create
+    # SSL/TLS secure channel" and reads like an outage. PowerShell 7 already
+    # defaults correctly; setting it is harmless there.
     try {
-        $out  = & $FilePath @Arguments 2>&1
-        $code = $LASTEXITCODE
+        [Net.ServicePointManager]::SecurityProtocol =
+            [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+    }
+    catch { $null = $_ }
+
+    # The progress bar makes Invoke-WebRequest an order of magnitude slower on
+    # 5.1 and writes nothing a caller needs.
+    $prevProgress = $ProgressPreference
+    $ProgressPreference = 'SilentlyContinue'
+    try {
+        Invoke-WebRequest -Uri $Uri -OutFile $temp -UseBasicParsing -TimeoutSec 30
+        if (-not (Test-Path -LiteralPath $temp)) { throw "download produced no file" }
+        if ((Get-Item -LiteralPath $temp).Length -lt 1KB) {
+            throw "downloaded file is implausibly small ($((Get-Item -LiteralPath $temp).Length) bytes)"
+        }
+        Move-Item -LiteralPath $temp -Destination $Destination -Force
     }
     finally {
-        $ErrorActionPreference = $prev
-    }
-    if (-not $IgnoreExitCode -and $code -ne 0) {
-        $joined = ($out | Out-String).Trim()
-        throw "$([IO.Path]::GetFileName($FilePath)) $($Arguments -join ' ') failed (exit $code): $joined"
-    }
-    return $out
-}
-
-function Test-Interactive {
-    # Read-Host blocks or throws when stdin is not a console; detect that up front.
-    if (-not [Environment]::UserInteractive) { return $false }
-    try { return -not [Console]::IsInputRedirected } catch { return $false }
-}
-
-function Confirm-Destructive {
-    param(
-        [Parameter(Mandatory = $true)][string]$Target,
-        [Parameter(Mandatory = $true)][string]$Operation
-    )
-    if ($Force) { return $true }
-    if (-not (Test-Interactive)) {
-        Write-Warn "$Operation on '$Target' needs confirmation, but this session is non-interactive."
-        Write-Warn "Re-run with -Force to proceed."
-        return $false
-    }
-    $answer = Read-Host "$Operation on '$Target'? [y/N]"
-    return ($answer -match '^(y|yes)$')
-}
-
-# --------------------------------------------------------------------------------------
-# WSL helpers
-# --------------------------------------------------------------------------------------
-function Get-WslExe {
-    $cmd = Get-Command wsl.exe -ErrorAction SilentlyContinue
-    if ($cmd) { return $cmd.Source }
-    $fallback = Join-Path $env:WINDIR 'System32\wsl.exe'
-    if (Test-Path -LiteralPath $fallback) { return $fallback }
-    throw "wsl.exe not found. WSL2 is required."
-}
-
-function Get-WslDistroNames {
-    $wsl  = Get-WslExe
-    $prev = $ErrorActionPreference
-    $ErrorActionPreference = 'Continue'
-    try { $raw = & $wsl --list --quiet 2>$null } finally { $ErrorActionPreference = $prev }
-    if (-not $raw) { return @() }
-    $names = @()
-    foreach ($line in $raw) {
-        # Belt and braces: strip NULs in case WSL_UTF8 is unsupported on this build.
-        $clean = ($line -replace "`0", '').Trim()
-        if ($clean) { $names += $clean }
-    }
-    return $names
-}
-
-# --------------------------------------------------------------------------------------
-# Naming and safety guards
-# --------------------------------------------------------------------------------------
-function Test-ProtectedName {
-    param([Parameter(Mandatory = $true)][string]$DistroName)
-    foreach ($p in $script:Protected) { if ($DistroName -ieq $p) { return $true } }
-    return $false
-}
-
-function Assert-Removable {
-    <# The single choke point for every destructive path. #>
-    param([Parameter(Mandatory = $true)][AllowEmptyString()][string]$DistroName)
-
-    if ([string]::IsNullOrWhiteSpace($DistroName)) {
-        throw "Refusing to remove: empty distro name."
-    }
-    if (Test-ProtectedName -DistroName $DistroName) {
-        throw "REFUSING to remove protected distro '$DistroName'. This is a hard guard."
-    }
-    if (-not $DistroName.StartsWith($script:Prefix, [StringComparison]::Ordinal)) {
-        throw ("REFUSING to remove '$DistroName': it does not start with '$($script:Prefix)'. " +
-               "This script only removes distros it created.")
+        $ProgressPreference = $prevProgress
+        if (Test-Path -LiteralPath $temp) { Remove-Item -LiteralPath $temp -Force -ErrorAction SilentlyContinue }
     }
 }
 
-function Assert-InsideBaseDir {
-    <#
-      Guarantees a directory slated for recursive deletion is a *strict* child of BaseDir.
-      Without this, an empty or crafted distro name could resolve the target to BaseDir
-      itself (or, with traversal, somewhere else entirely).
-    #>
-    param([Parameter(Mandatory = $true)][string]$Path)
-
-    $baseFull = [IO.Path]::GetFullPath($script:BaseDir.TrimEnd('\', '/') + [IO.Path]::DirectorySeparatorChar)
-    $full     = [IO.Path]::GetFullPath($Path)
-
-    if ($full.TrimEnd('\', '/') -ieq $baseFull.TrimEnd('\', '/')) {
-        throw "REFUSING to delete the base directory itself ($full)."
-    }
-    if (-not $full.StartsWith($baseFull, [StringComparison]::OrdinalIgnoreCase)) {
-        throw "REFUSING to delete '$full': outside $($script:BaseDir)."
-    }
-}
-
-function ConvertTo-SafeName {
-    param([Parameter(Mandatory = $true)][AllowEmptyString()][string]$Raw)
-    $s = $Raw.ToLowerInvariant() -replace '[^a-z0-9._-]', '-'
-    $s = $s -replace '-{2,}', '-'
-    $s = $s -replace '\.{2,}', '.'      # kill any ".." traversal component
-    return $s.Trim('-', '.')
-}
-
-function New-DistroName {
-    param([AllowEmptyString()][string]$FromImage)
-    $stem = 'rootfs'
-    if (-not [string]::IsNullOrWhiteSpace($FromImage)) { $stem = ConvertTo-SafeName -Raw $FromImage }
-    if ([string]::IsNullOrWhiteSpace($stem)) { $stem = 'rootfs' }
-    if ($stem.Length -gt 32) { $stem = $stem.Substring(0, 32).Trim('-', '.') }
-    $suffix = -join ((48..57) + (97..122) | Get-Random -Count 4 | ForEach-Object { [char]$_ })
-    return "$($script:Prefix)$stem-$suffix"
-}
-
-function Resolve-DistroName {
-    param([AllowEmptyString()][string]$Requested, [AllowEmptyString()][string]$FromImage)
-    if ([string]::IsNullOrWhiteSpace($Requested)) { return (New-DistroName -FromImage $FromImage) }
-    $n = ConvertTo-SafeName -Raw $Requested
-    if ([string]::IsNullOrWhiteSpace($n)) { throw "Name '$Requested' sanitises to nothing." }
-    if (-not $n.StartsWith($script:Prefix, [StringComparison]::Ordinal)) { $n = "$($script:Prefix)$n" }
-    return $n
-}
-
-# --------------------------------------------------------------------------------------
-# Rootfs acquisition
-# --------------------------------------------------------------------------------------
-function Get-ContainerEngine {
-    foreach ($exe in @('podman', 'docker')) {
-        $cmd = Get-Command "$exe.exe" -ErrorAction SilentlyContinue
-        if ($cmd) { return [pscustomobject]@{ Name = $exe; Path = $cmd.Source } }
-    }
-    $candidates = @(
-        [pscustomobject]@{ Name = 'podman'; Path = (Join-Path $env:LOCALAPPDATA 'Programs\Podman\podman.exe') },
-        [pscustomobject]@{ Name = 'podman'; Path = (Join-Path $env:ProgramFiles 'RedHat\Podman\podman.exe') },
-        [pscustomobject]@{ Name = 'docker'; Path = (Join-Path $env:ProgramFiles 'Docker\Docker\resources\bin\docker.exe') }
-    )
-    foreach ($c in $candidates) {
-        if (Test-Path -LiteralPath $c.Path) { return $c }
-    }
-    return $null
-}
-
-function Export-ImageRootfs {
-    <# Pull an OCI image and flatten it to a rootfs tarball. #>
-    param(
-        [Parameter(Mandatory = $true)][string]$ImageRef,
-        [Parameter(Mandatory = $true)][string]$OutFile
-    )
-    $engine = Get-ContainerEngine
-    if (-not $engine) {
-        throw ("No container engine found. Install podman or docker, or pass -Tarball " +
-               "with a rootfs archive instead.")
-    }
-    Write-Step "Engine: $($engine.Name) ($($engine.Path))"
-
-    # Readiness probe: a stopped podman machine otherwise yields a cryptic pull error.
-    try { Invoke-Native -FilePath $engine.Path -Arguments @('info', '--format', '{{.Host.Arch}}') | Out-Null }
-    catch {
-        throw ("$($engine.Name) is installed but not responding. If you use podman on Windows, " +
-               "start its VM with:  podman machine start`nUnderlying error: $($_.Exception.Message)")
+try {
+    # --- the local escape hatch, before any network is touched ---------------
+    $local = Get-EnvOrDefault 'WSL_EPHEMERAL_LOCAL'
+    if ($local) {
+        if (-not (Test-Path -LiteralPath $local -PathType Leaf)) {
+            throw "WSL_EPHEMERAL_LOCAL points at '$local', which is not a file."
+        }
+        $resolved = (Resolve-Path -LiteralPath $local).Path
+        Write-Step "Using local script (WSL_EPHEMERAL_LOCAL): $resolved"
+        & $resolved @args
+        $inner = if (Test-Path variable:LASTEXITCODE) { $LASTEXITCODE } else { 0 }
+        exit ([int]$inner)
     }
 
-    Write-Step "Pulling $ImageRef"
-    Invoke-Native -FilePath $engine.Path -Arguments @('pull', $ImageRef) | Out-Null
+    # --- resolve the pin and any override ------------------------------------
+    $ref      = Get-EnvOrDefault 'WSL_EPHEMERAL_REF' $PinnedRef
+    $expected = (Get-EnvOrDefault 'WSL_EPHEMERAL_SHA256' '').ToLowerInvariant()
+    $refIsPinned = ($ref -eq $PinnedRef)
 
-    $cid = $null
-    try {
-        # 'create' materialises a container without running it; its filesystem is the rootfs.
-        # Images with no CMD/ENTRYPOINT reject a bare create, so fall back to naming one.
+    if ($refIsPinned -and -not $expected) { $expected = $PinnedSha256.ToLowerInvariant() }
+
+    # The pin must be a COMMIT. Tested by shape, not by comparing against a
+    # magic placeholder string: a search-and-replace that fills the pin in also
+    # rewrites the placeholder it is compared against, which inverts this guard
+    # into throwing whenever the pin IS in use. That happened while this file
+    # was being pinned. Testing the shape also catches the likelier mistake of
+    # pinning to a branch, which is the thing the guard exists to prevent.
+    if ($refIsPinned -and $ref -notmatch '^[0-9a-fA-F]{40}$') {
+        throw ("This wrapper is not pinned to a commit (got '$ref'). A branch or a tag " +
+               "moves, so it is refused. Set WSL_EPHEMERAL_LOCAL, or set WSL_EPHEMERAL_REF " +
+               "with WSL_EPHEMERAL_SHA256, or write a 40-character commit SHA into this file.")
+    }
+
+    $verify = $true
+    if (-not $expected) {
+        # An overridden ref with no digest. Deliberate bypass only.
+        if ((Get-EnvOrDefault 'WSL_EPHEMERAL_ALLOW_UNVERIFIED') -ne '1') {
+            throw ("WSL_EPHEMERAL_REF is set to '$ref' but no WSL_EPHEMERAL_SHA256 was given. " +
+                   "Supply the digest, or set WSL_EPHEMERAL_ALLOW_UNVERIFIED=1 to run it unverified.")
+        }
+        $verify = $false
+        Write-Warn "running an UNVERIFIED ref '$ref': no digest was supplied."
+    }
+
+    # --- cache, keyed by ref so a pin change cannot serve the old copy -------
+    $cacheDir = Get-EnvOrDefault 'WSL_EPHEMERAL_CACHE'
+    if (-not $cacheDir) {
+        if ([string]::IsNullOrWhiteSpace($env:LOCALAPPDATA)) {
+            throw "LOCALAPPDATA is not set and WSL_EPHEMERAL_CACHE was not given; nowhere to cache."
+        }
+        $cacheDir = Join-Path $env:LOCALAPPDATA 'wsl-ephemeral\cache'
+    }
+    $safeRef = ($ref -replace '[^A-Za-z0-9._-]', '-')
+    $cached  = Join-Path $cacheDir ("wsl-ephemeral-$safeRef.ps1")
+
+    $uri = "https://raw.githubusercontent.com/$UpstreamOwner/$UpstreamRepo/$ref/$UpstreamPath"
+
+    # A cached copy is used only when it still matches the digest. An unverified
+    # run cannot trust a cache either, so it always re-downloads.
+    $useCache = $false
+    if ($verify -and (Test-Path -LiteralPath $cached -PathType Leaf)) {
+        if ((Get-Sha256 -LiteralFile $cached) -eq $expected) { $useCache = $true }
+        else { Write-Warn "cached copy failed its digest check; re-downloading." }
+    }
+
+    if (-not $useCache) {
+        Write-Step "Fetching $UpstreamOwner/$UpstreamRepo@$($ref.Substring(0, [Math]::Min(12, $ref.Length)))"
         try {
-            $cid = (Invoke-Native -FilePath $engine.Path -Arguments @('create', $ImageRef) |
-                    Select-Object -Last 1).ToString().Trim()
+            Save-Upstream -Uri $uri -Destination $cached
         }
         catch {
-            Write-Warn "bare create failed; retrying with an explicit command"
-            $cid = (Invoke-Native -FilePath $engine.Path -Arguments @('create', $ImageRef, '/bin/sh') |
-                    Select-Object -Last 1).ToString().Trim()
-        }
-        if ([string]::IsNullOrWhiteSpace($cid)) { throw "Container id was empty." }
-
-        $short = $cid.Substring(0, [Math]::Min(12, $cid.Length))
-        Write-Step "Exporting rootfs (container $short)"
-        # -o is mandatory: PowerShell redirection corrupts binary streams.
-        Invoke-Native -FilePath $engine.Path -Arguments @('export', '-o', $OutFile, $cid) | Out-Null
-    }
-    finally {
-        if ($cid) {
-            try { Invoke-Native -FilePath $engine.Path -Arguments @('rm', '-f', $cid) -IgnoreExitCode | Out-Null }
-            catch { Write-Warn "could not remove temp container $cid" }
-        }
-    }
-
-    if (-not (Test-Path -LiteralPath $OutFile)) { throw "Export produced no file at $OutFile" }
-    $size = (Get-Item -LiteralPath $OutFile).Length
-    if ($size -lt 1KB) { throw "Exported rootfs is implausibly small ($size bytes)." }
-    Write-Ok ("rootfs: {0:N1} MiB" -f ($size / 1MB))
-}
-
-# --------------------------------------------------------------------------------------
-# Actions
-# --------------------------------------------------------------------------------------
-function Remove-EphemeralDistro {
-    param(
-        [Parameter(Mandatory = $true)][string]$DistroName,
-        [switch]$SkipConfirm
-    )
-    Assert-Removable -DistroName $DistroName          # hard guard, always first
-
-    if (-not $SkipConfirm) {
-        if (-not (Confirm-Destructive -Target $DistroName -Operation 'Unregister WSL distro and DELETE its disk')) {
-            Write-Warn "skipped $DistroName"
-            return
-        }
-    }
-
-    $wsl = Get-WslExe
-    if ((Get-WslDistroNames) -contains $DistroName) {
-        Invoke-Native -FilePath $wsl -Arguments @('--terminate', $DistroName) -IgnoreExitCode | Out-Null
-        Invoke-Native -FilePath $wsl -Arguments @('--unregister', $DistroName) | Out-Null
-        Write-Ok "unregistered $DistroName"
-    }
-    else {
-        Write-Warn "$DistroName was not registered"
-    }
-
-    $dir = Join-Path $script:BaseDir $DistroName
-    if (Test-Path -LiteralPath $dir) {
-        Assert-InsideBaseDir -Path $dir               # containment guard
-        Remove-Item -LiteralPath $dir -Recurse -Force -ErrorAction SilentlyContinue
-        Write-Ok "deleted $dir"
-    }
-}
-
-function Invoke-ActionNew {
-    if (-not $Image -and -not $Tarball) { throw "Action New requires -Image (e.g. alpine:3.22) or -Tarball <path>." }
-    if ($Image -and $Tarball)           { throw "Pass either -Image or -Tarball, not both." }
-
-    $distro = Resolve-DistroName -Requested $Name -FromImage $Image
-    if (Test-ProtectedName -DistroName $distro) { throw "Refusing to create a distro named '$distro' (protected)." }
-    if ((Get-WslDistroNames) -contains $distro) {
-        throw "Distro '$distro' already exists. Choose another -Name or remove it first."
-    }
-
-    $target  = Join-Path $script:BaseDir $distro
-    Assert-InsideBaseDir -Path $target               # validate before we ever create it
-    $tarPath = $null
-    $tempTar = $false
-
-    try {
-        New-Item -ItemType Directory -Path $target -Force | Out-Null
-
-        if ($Tarball) {
-            if (-not (Test-Path -LiteralPath $Tarball)) { throw "Tarball not found: $Tarball" }
-            $tarPath = (Resolve-Path -LiteralPath $Tarball).Path
-        }
-        else {
-            $tarPath = Join-Path $script:BaseDir ("{0}.tar" -f $distro)
-            $tempTar = $true
-            Export-ImageRootfs -ImageRef $Image -OutFile $tarPath
-        }
-
-        Write-Step "Importing as WSL2 distro '$distro'"
-        $wsl = Get-WslExe
-        Invoke-Native -FilePath $wsl -Arguments @('--import', $distro, $target, $tarPath, '--version', '2') | Out-Null
-
-        # Smoke test: a distro whose /bin/sh does not run is useless. Fail loudly now.
-        # The loop also absorbs a first-boot race: drvfs automount of /mnt/<drive> can lag
-        # the first shell by a second or two, which otherwise makes the very first user
-        # command fail on a path under /mnt/c for no visible reason.
-        $prev = $ErrorActionPreference; $ErrorActionPreference = 'Continue'
-        try {
-            # NOT A HERE-STRING, ON PURPOSE. docs/conventions/shell.md: Windows
-            # PowerShell 5.1 mis-parses a here-string whose terminator arrives
-            # with a bare LF, and this template's defence is to write none in a
-            # .ps1 at all rather than to rely on .gitattributes reaching every
-            # checkout. An array joined with a newline carries the same script
-            # and no line ending can break it.
-            $probeScript = @(
-                'echo __WSL_OK__',
-                'for _ in 1 2 3 4 5 6 7 8 9 10; do',
-                '    if [ -d /mnt/c ]; then break; fi',
-                '    sleep 1',
-                'done',
-                'if [ ! -d /mnt/c ]; then echo "note: no /mnt/c (Windows drives not mounted)"; fi',
-                'head -2 /etc/os-release 2>/dev/null || echo "os-release: n/a"'
-            ) -join "`n"
-            $probe = & $wsl -d $distro -u root -- /bin/sh -lc $probeScript 2>&1
-        }
-        finally { $ErrorActionPreference = $prev }
-
-        $probeText = ($probe | Out-String)
-        if ($probeText -notmatch '__WSL_OK__') {
-            throw "Distro imported but /bin/sh did not run. Output: $($probeText.Trim())"
-        }
-        Write-Ok "'$distro' is up"
-        foreach ($l in ($probeText -split "`r?`n")) {
-            $t = $l.Trim()
-            if ($t -and $t -ne '__WSL_OK__') { Write-Host "    $t" -ForegroundColor DarkGray }
-        }
-
-        if ($Command) {
-            Write-Step "Running command as '$User'"
-            $prev = $ErrorActionPreference; $ErrorActionPreference = 'Continue'
-            try { & $wsl -d $distro -u $User -- /bin/sh -lc $Command; $rc = $LASTEXITCODE }
-            finally { $ErrorActionPreference = $prev }
-            if ($rc -ne 0) { Write-Warn "command exited $rc" }
-        }
-
-        if ($Ephemeral) {
-            Write-Step "-Ephemeral set: tearing down '$distro'"
-            Remove-EphemeralDistro -DistroName $distro -SkipConfirm
-            return
-        }
-
-        Write-Host ""
-        Write-Host "  Distro : $distro"        -ForegroundColor White
-        Write-Host "  Disk   : $target"        -ForegroundColor White
-        Write-Host "  Enter  : wsl -d $distro" -ForegroundColor White
-        Write-Host "  Remove : -Action Remove -Name $distro -Force" -ForegroundColor White
-    }
-    catch {
-        Write-Warn "creation failed; rolling back"
-        try {
-            if ((Get-WslDistroNames) -contains $distro) {
-                Assert-Removable -DistroName $distro
-                Invoke-Native -FilePath (Get-WslExe) -Arguments @('--unregister', $distro) -IgnoreExitCode | Out-Null
+            # No network. A verified cache is a correct answer; anything else is
+            # an error, because guessing here means running the wrong code.
+            if ($verify -and (Test-Path -LiteralPath $cached -PathType Leaf) -and
+                (Get-Sha256 -LiteralFile $cached) -eq $expected) {
+                Write-Warn "fetch failed ($($_.Exception.Message.Trim())); using the verified cached copy."
             }
-            if (Test-Path -LiteralPath $target) {
-                Assert-InsideBaseDir -Path $target
-                Remove-Item -LiteralPath $target -Recurse -Force -ErrorAction SilentlyContinue
+            else {
+                throw ("Could not fetch $uri and no verified cached copy exists.`n" +
+                       "  Underlying error: $($_.Exception.Message.Trim())`n" +
+                       "  Offline? Point WSL_EPHEMERAL_LOCAL at a local copy of the script.")
             }
         }
-        catch { Write-Warn "rollback incomplete: $($_.Exception.Message)" }
-        throw
     }
-    finally {
-        if ($tempTar -and $tarPath -and (Test-Path -LiteralPath $tarPath)) {
-            Remove-Item -LiteralPath $tarPath -Force -ErrorAction SilentlyContinue
+
+    if ($verify) {
+        $actual = Get-Sha256 -LiteralFile $cached
+        if ($actual -ne $expected) {
+            Remove-Item -LiteralPath $cached -Force -ErrorAction SilentlyContinue
+            throw ("DIGEST MISMATCH for $uri`n" +
+                   "  expected $expected`n" +
+                   "  actual   $actual`n" +
+                   "  Refusing to run it. The cached copy has been deleted.")
         }
     }
-}
 
-function Invoke-ActionRun {
-    if (-not $Name)    { throw "Action Run requires -Name." }
-    if (-not $Command) { throw "Action Run requires -Command." }
-    $distro = Resolve-DistroName -Requested $Name -FromImage ''
-    if ((Get-WslDistroNames) -notcontains $distro) {
-        throw "Distro '$distro' is not registered. Create it with -Action New."
-    }
-    $prev = $ErrorActionPreference; $ErrorActionPreference = 'Continue'
-    try { & (Get-WslExe) -d $distro -u $User -- /bin/sh -lc $Command; $rc = $LASTEXITCODE }
-    finally { $ErrorActionPreference = $prev }
-    exit $rc
-}
+    Assert-PowerShellSyntax -LiteralFile $cached
 
-function Invoke-ActionList {
-    $all  = @(Get-WslDistroNames)
-    $mine = @($all | Where-Object { $_.StartsWith($script:Prefix, [StringComparison]::Ordinal) })
-    Write-Step "Ephemeral distros (prefix '$($script:Prefix)')"
-    if ($mine.Count -eq 0) { Write-Host "  (none)" -ForegroundColor DarkGray }
-    else { foreach ($m in $mine) { Write-Host "  $m" } }
-
-    Write-Step "Other distros on this system -- never touched by this script"
-    $others = @($all | Where-Object { -not $_.StartsWith($script:Prefix, [StringComparison]::Ordinal) })
-    if ($others.Count -eq 0) { Write-Host "  (none)" -ForegroundColor DarkGray }
-    else {
-        foreach ($o in $others) {
-            $tag = ''
-            if (Test-ProtectedName -DistroName $o) { $tag = '   [PROTECTED]' }
-            Write-Host ("  {0}{1}" -f $o, $tag) -ForegroundColor DarkGray
-        }
-    }
-}
-
-function Invoke-ActionPurge {
-    $mine = @(Get-WslDistroNames | Where-Object { $_.StartsWith($script:Prefix, [StringComparison]::Ordinal) })
-    if ($mine.Count -eq 0) { Write-Ok "nothing to purge"; return }
-    Write-Step "Purging $($mine.Count) ephemeral distro(s): $($mine -join ', ')"
-    if (-not (Confirm-Destructive -Target "$($mine.Count) distro(s)" -Operation 'Purge ephemeral distros')) { return }
-    foreach ($d in $mine) {
-        try { Remove-EphemeralDistro -DistroName $d -SkipConfirm }
-        catch { Write-Warn "skip ${d}: $($_.Exception.Message)" }
-    }
-}
-
-# --------------------------------------------------------------------------------------
-# Main
-# --------------------------------------------------------------------------------------
-try {
-    if ([string]::IsNullOrWhiteSpace($script:BaseDir)) { throw "LOCALAPPDATA is not set; cannot choose a base directory." }
-    New-Item -ItemType Directory -Path $script:BaseDir -Force | Out-Null
-
-    switch ($Action) {
-        'New'    { Invoke-ActionNew }
-        'Run'    { Invoke-ActionRun }
-        'List'   { Invoke-ActionList }
-        'Remove' {
-            if (-not $Name) { throw "Action Remove requires -Name." }
-            Remove-EphemeralDistro -DistroName (Resolve-DistroName -Requested $Name -FromImage '')
-        }
-        'Purge'  { Invoke-ActionPurge }
-    }
+    & $cached @args
+    $innerCode = if (Test-Path variable:LASTEXITCODE) { $LASTEXITCODE } else { 0 }
+    exit ([int]$innerCode)
 }
 catch {
     Write-Host "ERROR: $($_.Exception.Message)" -ForegroundColor Red

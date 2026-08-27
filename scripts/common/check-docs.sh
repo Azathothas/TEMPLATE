@@ -17,7 +17,7 @@
 # check-control-bytes.sh, which reads every text file. Run both.
 #
 # It also enforces the mechanical half of the prose rule: no em dash, and no
-# emoji outside the three this repository defines. docs/conventions/prose.md is
+# emoji outside the five this repository defines. docs/conventions/prose.md is
 # the rule; this is the part a machine can hold.
 #
 # ⛔ WHAT IT DOES NOT CHECK IS WHETHER A CLAIM IS TRUE. That is a reading, and
@@ -234,9 +234,18 @@ for f in $FILES; do
   grep -qxF "$f" "$LINKED.n" || report "$f is linked from nowhere. An unlinked page is not read, so it is not corrected."
 done
 
-# ── only the three defined markers ──────────────────────────────────────────
+# ── only the five defined characters ────────────────────────────────────────
+# Three prose markers and two status glyphs. docs/conventions/prose.md is the
+# rule and says why the set is a list rather than a principle.
+#
 # ⚠ Needs a grep that speaks unicode ranges. BSD grep does not, so this
 # degrades honestly rather than silently passing.
+#
+# ⛔ THE ALLOWLIST IS A LOOKAHEAD, NOT A SECOND grep -v. It used to be
+# `grep -nP <banned> | grep -vP <allowed>`, and grep -v drops the whole LINE, so
+# a line carrying an allowed marker hid every banned emoji beside it: `⛔ never
+# use <party emoji>` passed the check. The lookahead excludes the CHARACTER, so
+# the line is still reported for the character that is wrong.
 EMOJI_NOTE=""
 # ⚠ The probe tests the ACTUAL pattern shape, not merely whether -P exists.
 # This machine's grep has -P but its PCRE is not in UTF-8 mode by default, so
@@ -245,14 +254,14 @@ EMOJI_NOTE=""
 # available and then printed that error on every run.
 if printf '\342\255\220' | grep -qP '(*UTF)[\x{2B50}]' 2>/dev/null; then
   bad=$(printf '%s\n' "$FILES" | tr '\n' '\0' \
-    | xargs -0 grep -nP '(*UTF)[\x{1F300}-\x{1FAFF}\x{2190}-\x{21FF}\x{2300}-\x{23FF}\x{2500}-\x{27BF}\x{2B00}-\x{2BFF}\x{FE0F}]' 2>/dev/null \
-    | grep -vP '(*UTF)\x{26D4}|\x{2B50}|\x{26A0}' | head -5 || true)
+    | xargs -0 grep -nP '(*UTF)(?![\x{26D4}\x{2B50}\x{26A0}\x{2705}\x{274C}])[\x{1F300}-\x{1FAFF}\x{2190}-\x{21FF}\x{2300}-\x{23FF}\x{2500}-\x{27BF}\x{2B00}-\x{2BFF}\x{FE0F}]' 2>/dev/null \
+    | head -5 || true)
   if [ -n "$bad" ]; then
     printf '%s\n' "$bad" | while IFS= read -r b; do
       printf '  %s\n' "$(printf '%s' "$b" | cut -c1-110)"
     done > "$TMP/emoji"
     while IFS= read -r e; do
-      report "an emoji outside the three defined markers: $e"
+      report "an emoji outside the five defined characters: $e"
     done < "$TMP/emoji"
   fi
 else

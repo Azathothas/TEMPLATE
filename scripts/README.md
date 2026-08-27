@@ -278,22 +278,28 @@ git config, and if neither has one it refuses rather than guessing.
 
 ### `powershell-windows/wsl-ephemeral.ps1`
 
-Create, use and destroy throwaway WSL2 distros, from an OCI image or a local
-rootfs tarball.
+⭐ **A wrapper. The implementation lives in `Azathothas/ToolKit`** and this file
+fetches it. Arguments pass through unchanged and the inner exit code is
+propagated, so callers of the old path keep working.
 
-⭐ **It exists because the default host here is Windows and agents constantly
-need a Linux userspace.** Without it, an agent that needs one improvises, asks,
-or gives up.
+**Why it moved.** A template that ships a working tool acquires that tool's
+defects, its issues and its release cadence, and every project started from the
+template inherits a snapshot nobody will ever update. One copy that can be
+fixed once is the whole point. The template keeps the entry point; the tool
+lives where it can have a backlog.
 
-⛔ **Removal is constrained four ways and all four are load-bearing**: a fixed
-name prefix; refusal to remove anything lacking it; an explicit protected list
-covering the container runtimes; and directory deletion confined to one base
-path. Destructive actions require `-Force` when non-interactive.
+⛔ **It is pinned to a COMMIT and verified against a SHA-256 before anything
+executes.** This wrapper downloads code and runs it, which is a supply chain,
+and it gets the same discipline as a third-party action pin for the same
+reason: a moving reference runs code nobody reviewed. A digest mismatch is a
+hard stop, the cached copy is deleted, and no network with no verified cache is
+an error rather than a silent skip. The `.NOTES` block in the file carries the
+environment overrides and the two commands that refresh the pin.
 
-⚠ **Asking it to remove a protected distro by name does not remove it.** The
-name is prefix-forced first, so `-Action Remove -Name podman-machine-default
--Force` targets `eph-podman-machine-default`, which does not exist. Verified on
-a machine that had the real one registered; it survived.
+⚠ **Bumping the pin is a deliberate act, so a fix upstream does not arrive on
+its own.** That is the cost of pinning and it is the correct trade here: the
+alternative is every project started from this template executing whatever
+`main` says on the day it runs.
 
 ---
 

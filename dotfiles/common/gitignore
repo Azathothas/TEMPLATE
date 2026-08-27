@@ -66,8 +66,27 @@ references/
 reference_attachments/
 temp/
 
-# ⛔ A Windows RESERVED DEVICE NAME. Redirecting to /dev/null under a shell that
-# does not map it creates a real file called nul, which git then tracks, which
-# breaks git stash outright, and which cannot be deleted by rm or by Python.
-# Ignoring it is what stops the recurrence.
+# ⛔ WINDOWS RESERVED DEVICE NAMES. Two different things create one as a real
+# file, and only the first is something you wrote:
+#   1. your own redirect: 2>/dev/null under a shell that does not map it makes
+#      a real file called nul, which git then tracks, which breaks git stash
+#      outright, and which cannot be deleted by rm or by Python;
+#   2. a tool's own argument list: podman machine ssh passes
+#      -o UserKnownHostsFile=NUL to its ssh, and under Git Bash that is a
+#      filename, so a 99-byte NUL holding an ssh host key lands in whatever
+#      directory the command ran in. Usually a repository.
+# ⚠ MSYS_NO_PATHCONV does not prevent the second one: the argument never looked
+# like a path. Ignoring the whole set is what stops the recurrence.
 nul
+CON
+PRN
+AUX
+NUL
+COM[1-9]
+LPT[1-9]
+CON.*
+PRN.*
+AUX.*
+NUL.*
+COM[1-9].*
+LPT[1-9].*

@@ -95,10 +95,13 @@ afternoon.
   by accident. A credential ignored after the fact was trackable in between.
 - ⛔ **`.gitignore` only applies to files git is not already tracking.** Adding
   a line does not untrack what is already in.
-- ⛔ **`nul` is a Windows reserved device name.** Redirecting to `/dev/null`
-  under a shell that does not map it creates a real file called `nul`, which
-  git tracks, which breaks `git stash` outright, and which cannot be deleted by
-  `rm` or by Python.
+- ⛔ **The whole Windows reserved-device set is ignored, not only `nul`.**
+  `CON`, `PRN`, `AUX`, `NUL`, `COM1` to `COM9`, `LPT1` to `LPT9`. Your own
+  `2>/dev/null` creates one under a shell that does not map `/dev/null`, and
+  ⚠ **a tool's own argument list creates one you never wrote**: `podman machine
+  ssh` passes `-o UserKnownHostsFile=NUL` and Git Bash treats it as a filename.
+  [`../docs/conventions/shell.md`](../docs/conventions/shell.md) section 7
+  carries both triggers and the measurement.
 - ⛔ **A lockfile is committed.** Every ecosystem file says so where it applies,
   as a comment rather than as a rule, because a project without one installs a
   different dependency tree every time.
