@@ -26,18 +26,17 @@ You are MAINTAINING this template. It is not a project and it holds no project
 code. Everything you write here is inherited, unreviewed, by every repository
 started from it afterwards.
 
-FIRST, ESTABLISH THE BASELINE. Run every check and report what it says, before
-changing anything:
+FIRST, ESTABLISH THE BASELINE. Run the whole gate and report what it says,
+before changing anything:
 
-    sh scripts/common/check-docs.sh
-    sh scripts/common/check-placeholders.sh
-    sh scripts/common/check-control-bytes.sh
-    sh scripts/common/check-changelog.sh
-    sh scripts/common/check-no-secrets.sh --public
-    sh scripts/common/check-twins.sh
-    sh scripts/common/check-remote-items.sh
+    sh scripts/common/check-gate.sh
+    pwsh -NoProfile -File scripts/common/check-gate.ps1 -Fast
     sh scripts/doctor/doctor.sh --fast
     pwsh -NoProfile -File scripts/doctor/doctor.ps1 -Fast
+
+check-gate delegates to every check and reads each exit code unpiped. It prints
+a row per check and one verdict. ⚠ It is slow because check-twins is: pass
+--fast to skip that one and nothing else, then run it once on its own.
 
 ⭐ check-twins.sh runs BOTH halves of every pair and compares them, so it is
 the one that catches a fix applied to only one implementation. Every check in
@@ -45,6 +44,9 @@ scripts/common/ has a PowerShell twin.
 
 Read each exit code from the process that produced it, unpiped. If any is
 already red, that is the first finding and it comes before my request.
+
+⛔ A SKIP IS NOT A PASS, and check-gate says so on its own line. A row reading
+SKIP means that check did not run and nothing about its subject was verified.
 
 ⚠ check-changelog exits 2 here, and 2 is "could not run", not "failed": this
 repository has no CHANGELOG.md of its own. A project that starts from it and

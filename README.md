@@ -10,7 +10,31 @@ It holds no project code and is not itself a project.
 
 ---
 
-## Use it
+## ⭐ Use it, whatever the situation
+
+**Nothing to clone. Nothing to fill in. No prompt to pick.** Paste this into
+the agent of whatever you are working on:
+
+```text
+Fetch and read this in full before doing anything else:
+    https://raw.githubusercontent.com/Azathothas/TEMPLATE/main/ROUTE.md
+Work out which job this is, ask me in this session if the tree does not settle
+it, and follow the row you land on. Do not end your turn to ask me: ask and
+keep going. Stop for my approval before writing anything.
+```
+
+[`ROUTE.md`](ROUTE.md) classifies the situation from the tree, asks you one
+grouped question only if it has to, and routes to the right procedure: a new
+project, adopting an existing one, a new unit of work, resuming, reworking,
+adopting without any agent-facing content, re-syncing a project that adopted
+this earlier, or changing the template itself.
+
+⚠ **The rest of this section is the long form**, for when you already know
+which of those you want.
+
+---
+
+## Use it: start a new project
 
 **1. Clone it into a new directory.**
 
@@ -37,7 +61,8 @@ code in that session.
 
 ## Use it on a repository that already exists
 
-⭐ Nothing to clone. Paste this into the agent of that project:
+⚠ [`ROUTE.md`](ROUTE.md) above reaches this on its own. Paste the following
+only when you already know adoption is what you want:
 
 ```text
 Fetch and read this in full before doing anything else:
@@ -64,8 +89,9 @@ project, is [`bootstrap/prompts/01-existing-project.md`](bootstrap/prompts/01-ex
 
 | directory | what |
 | --- | --- |
+| [`ROUTE.md`](ROUTE.md) | ⭐ the one paste that works out which job this is |
 | [`AGENTS.md`](AGENTS.md) | the router an agent reads first |
-| [`ADOPT.md`](ADOPT.md) | ⭐ the self-contained procedure for an existing repository |
+| [`ADOPT.md`](ADOPT.md) | the self-contained procedure for an existing repository |
 | [`MAINTAIN.md`](MAINTAIN.md) | the prompt to paste when improving this template |
 | [`bootstrap/`](bootstrap/) | the once-only path: the procedure, your answer sheet, the prompts |
 | [`docs/`](docs/) | the methodology, the conventions, the security rules, the templates |
@@ -111,12 +137,16 @@ sh scripts/common/check-twins.sh
 
 | check | refuses |
 | --- | --- |
-| `check-docs.sh` | a broken link, a shell block that does not parse, a control byte, an em dash, an undefined marker, a page nothing links to |
+| `check-gate.sh` | ⭐ runs all of the below in one command. A skipped check reads as a skip, never as a pass, and zero passes is red. |
+| `check-docs.sh` | a broken link, a shell block that does not parse, banned vocabulary, a page nothing links to |
+| `check-markers.sh` | ⭐ a character outside the five, in **any** tracked text file, and a page carrying so many markers that none of them are visible |
 | `check-placeholders.sh` | a template placeholder left in a real file |
+| `check-control-bytes.sh` | a literal control byte, which makes a file invisible to `grep` and to `git diff` at once |
 | `check-no-secrets.sh` | a credential or a fingerprint of a private system, in tracked **and** untracked files |
-| `check-twins.sh` | ⭐ the two probe implementations drifting apart |
+| `check-twins.sh` | ⭐ the two implementations of a check drifting apart |
 | `check-remote-items.sh` | ⭐ a pull request whose claims do not survive checking |
 | `fill-license.sh` | a licence whose notice would be corrupted by filling it in |
+| `mine-repo.sh` | ⚠ a helper, not a check: it fetches a repository's tracker and tree and **keeps** them, and refuses to write where an ignore rule would swallow the result |
 
 ⭐ **Each one has been mutation-proved**: the defect it exists to catch was
 planted, and the check was watched refusing it. A guard that has never been
@@ -145,9 +175,9 @@ is edited in the same change as the work, never after it. A session that fixes
 something and leaves the record saying it is open has made the next session
 read a lie first.
 
-**Every rule says what it cost to learn.** A rule with no incident behind it is
-a preference, and a preference stated as a rule is what makes an agent stop
-believing the rules that matter.
+**Every rule says what it cost to learn.** Nothing here is a preference wearing
+a rule's clothes, because that is what teaches a reader to discount the rules
+that matter. [`AGENTS.md`](AGENTS.md) states the standard this is held to.
 
 ---
 

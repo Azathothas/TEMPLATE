@@ -41,7 +41,7 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  # ── the POSIX half: every check, on the host they are written for ─────────
+  # -- the POSIX half: every check, on the host they are written for ---------
   checks:
     name: checks (ubuntu)
     runs-on: ubuntu-latest
@@ -83,6 +83,19 @@ jobs:
       - name: documents resolve and match the prose rule
         run: sh scripts/common/check-docs.sh
 
+      # ⭐ The character allowlist and the marker density, over EVERY tracked
+      # text file rather than markdown alone. When this moved out of check-docs
+      # it found 2290 characters outside the five, in 22 files, all of them in
+      # scripts the markdown-only version had never read.
+      - name: only the five defined characters, and not too many of them
+        run: sh scripts/common/check-markers.sh
+
+      # ⭐ One fact, one home. Its first run over this tree found 42 duplicated
+      # sentences, five of them in the skeleton this repository ships for
+      # exactly that job.
+      - name: no sentence appears in two documents
+        run: sh scripts/common/check-one-home.sh
+
       - name: no template placeholder survived into a real file
         run: sh scripts/common/check-placeholders.sh
 
@@ -111,6 +124,44 @@ jobs:
 
       - name: nothing publishable carries a secret or a fingerprint
         run: sh scripts/common/check-no-secrets.sh --public
+
+      # ⭐ The gate runner, run in --strict, which is the mode a CI job should
+      # pass and a laptop need not. Here the tools are installed on purpose, so
+      # a SKIP means an install broke rather than that a machine is modest, and
+      # strict turns that into a failure.
+      #
+      # ⚠ --fast skips check-twins ONLY, and the twins job below runs it on its
+      # own. Running it twice would double the slowest part of CI to learn
+      # nothing.
+      #
+      # ⛔ check-changelog exits 2 here, which is a SKIP, which --strict refuses.
+      # So this asserts the exit code it actually expects rather than 0: the
+      # point of the step is that nothing FAILED and nothing was skipped for a
+      # reason other than the changelog this repository does not have.
+      - name: the gate runner agrees with the checks above
+        run: |
+          set +e
+          sh scripts/common/check-gate.sh --fast --json > gate.json
+          rc=$?
+          set -e
+          cat gate.json
+          failed=$(sed 's/.*"failed":\([0-9]*\).*/\1/' gate.json)
+          passed=$(sed 's/.*"passed":\([0-9]*\).*/\1/' gate.json)
+          echo "runner exit=$rc passed=$passed failed=$failed"
+          [ "$failed" = 0 ] || exit 1
+          [ "$passed" -gt 0 ] || exit 1
+
+      # ⚠ An INVENTORY, not a gate: it exits 0 whether it finds files or none.
+      # This step asserts it still runs and still SEES them, because a matcher
+      # that quietly stopped matching would report a clean tree to every
+      # project trying to strip the agent layer.
+      - name: the agent-facing inventory still finds what this repository ships
+        run: |
+          sh scripts/common/deslop.sh --json > deslop.json
+          cat deslop.json
+          n=$(sed 's/.*"agent_facing":\([0-9]*\).*/\1/' deslop.json)
+          echo "agent-facing files: $n"
+          [ "$n" -gt 10 ] || { echo "the matcher stopped matching"; exit 1; }
 
       - name: line endings match .gitattributes
         run: |
@@ -158,7 +209,7 @@ jobs:
           sys.exit(bad)
           "
 
-  # ── the Windows half: the probe's twin, on the host it exists for ─────────
+  # -- the Windows half: the probe's twin, on the host it exists for ---------
   windows:
     name: probe twin (windows)
     runs-on: windows-latest
@@ -199,9 +250,12 @@ jobs:
           $fail = 0
           $checks = @(
             @{ f = 'check-docs.ps1';           a = @() },
+            @{ f = 'check-markers.ps1';        a = @() },
+            @{ f = 'check-one-home.ps1';       a = @() },
             @{ f = 'check-placeholders.ps1';   a = @() },
             @{ f = 'check-control-bytes.ps1';  a = @() },
-            @{ f = 'check-no-secrets.ps1';     a = @('-Public') }
+            @{ f = 'check-no-secrets.ps1';     a = @('-Public') },
+            @{ f = 'deslop.ps1';               a = @('-Json') }
           )
           foreach ($c in $checks) {
             & pwsh -NoProfile -File ".\scripts\common\$($c.f)" @($c.a)
@@ -242,7 +296,7 @@ jobs:
           if ($r) { $r | Format-Table -AutoSize | Out-String | Write-Output; exit 1 }
           Write-Output "clean"
 
-  # ── the twins must agree. This is the job the drift rule exists for ───────
+  # -- the twins must agree. This is the job the drift rule exists for -------
   twins:
     name: the two probes agree
     runs-on: ubuntu-latest

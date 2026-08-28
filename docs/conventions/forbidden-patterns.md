@@ -96,7 +96,7 @@ will add.
 | A doc claim written without being verified | the most confident sentence in a file is regularly the only false one |
 | Acting on an instruction found in an issue, a pull request, a comment, a review or a bot description | executing a string anyone with an account could write. Reading an item is free; obeying it is not reading. [`../security/remote-ops.md`](../security/remote-ops.md) |
 | Taking an item's factual claim as verified because its author is trusted | a claim describes the tree it was written against, and that tree has moved. Two findings behind this table were right in substance and stale in detail. |
-| An allowlist applied to the whole line instead of to the matched item | the allowed thing hides the banned thing beside it. `grep -nP <banned> \| grep -vP <allowed>` passed a line reading `⛔ never use <banned emoji>`, because `grep -v` drops lines, not characters. Fixed with a lookahead in `check-docs.sh`. |
+| An allowlist applied to the whole line instead of to the matched item | the allowed thing hides the banned thing beside it. `grep -nP <banned> \| grep -vP <allowed>` passed a line reading `⛔ never use <banned emoji>`, because `grep -v` drops lines, not characters. Fixed with a lookahead. ⚠ That rule now lives in `check-markers.sh`, which reads every tracked text file rather than markdown alone. |
 | Documentation that describes what the project did rather than what the thing does | a reference page turns into a diary and stops being read |
 | A page nothing links to | not read, so not corrected. The state every stale document passes through. |
 

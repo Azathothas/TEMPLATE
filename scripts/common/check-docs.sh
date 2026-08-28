@@ -16,9 +16,11 @@
 # every .ts, .py, .rs and .sh in the tree went unchecked, so it moved to
 # check-control-bytes.sh, which reads every text file. Run both.
 #
-# It also enforces the mechanical half of the prose rule: no em dash, and no
-# emoji outside the five this repository defines. docs/conventions/prose.md is
-# the rule; this is the part a machine can hold.
+# ⚠ THE CHARACTER HALF OF THE PROSE RULE IS NOT HERE. No em dash and no
+# character outside the five belong to check-markers.sh, which reads every
+# tracked text file rather than markdown alone. Run both. What stays here is
+# what is specific to a document: links, fenced blocks, placeholders, banned
+# vocabulary and orphan pages.
 #
 # ⛔ WHAT IT DOES NOT CHECK IS WHETHER A CLAIM IS TRUE. That is a reading, and
 # it belongs to the review pass. A guard that tried to verify prose would
@@ -122,7 +124,7 @@ for f in $FILES; do
     *) link_check=1 ;;
   esac
 
-  # ── one pass: strip fences and code spans, then emit every finding ────────
+  # -- one pass: strip fences and code spans, then emit every finding --------
   # ⚠ Stripping code spans is why `[int](2.65)` inside backticks is not
   # reported as a broken link. Markdown does not linkify a code span, and an
   # earlier ad-hoc version of this check reported exactly that as broken.
@@ -135,7 +137,6 @@ for f in $FILES; do
       while (match(line, /`[^`]*`/))
         line = substr(line, 1, RSTART - 1) substr(line, RSTART + RLENGTH)
 
-      if (index(line, "\342\200\224") > 0) print "EMDASH\t" NR "\t"
 
       rest = line
       while (match(rest, /\]\([^)\t ]+/)) {
@@ -148,8 +149,6 @@ for f in $FILES; do
 
   while IFS="$(printf '\t')" read -r kind ln detail; do
     case "${kind:-}" in
-      EMDASH)
-        report "$f:$ln em dash. docs/conventions/prose.md" ;;
       LINK)
         [ "$link_check" = "0" ] && continue
         case "$detail" in http://*|https://*|mailto:*|'') continue ;; esac
@@ -167,7 +166,7 @@ for f in $FILES; do
   # enforcing one rule is two places for it to be wrong, so this one no longer
   # does it. ⛔ Run both: this one for documents, that one for the whole tree.
 
-  # ── fenced shell blocks: extracted in one pass, then checked ─────────────
+  # -- fenced shell blocks: extracted in one pass, then checked -------------
   rm -f "$TMP"/blk.*
   awk -v D="$TMP" '
     /^[ \t]*```(bash|sh)[ \t]*$/ { inb = 1; n++; start[n] = NR; next }
@@ -189,7 +188,7 @@ for f in $FILES; do
   done < "$TMP/blocks"
 done
 
-# ── a page nothing links to ─────────────────────────────────────────────────
+# -- a page nothing links to -------------------------------------------------
 # ⛔ AN UNLINKED PAGE IS NOT READ, SO IT IS NOT CORRECTED, and that is the state
 # every stale document passes through on the way to being wrong.
 #
@@ -234,41 +233,20 @@ for f in $FILES; do
   grep -qxF "$f" "$LINKED.n" || report "$f is linked from nowhere. An unlinked page is not read, so it is not corrected."
 done
 
-# ── only the five defined characters ────────────────────────────────────────
-# Three prose markers and two status glyphs. docs/conventions/prose.md is the
-# rule and says why the set is a list rather than a principle.
+# -- the character rule moved, it was NOT dropped -------------------------
+# ⛔ THE FIVE-CHARACTER ALLOWLIST AND THE EM-DASH RULE NOW LIVE IN
+# check-markers.sh, over EVERY tracked text file rather than over markdown
+# alone. Two checks enforcing one rule is two places for it to be wrong, and
+# these two would have been wrong differently: this one strips fenced blocks
+# and code spans before it looks and a whole-tree scan that did not would
+# refuse the page that names the character it bans.
 #
-# ⚠ Needs a grep that speaks unicode ranges. BSD grep does not, so this
-# degrades honestly rather than silently passing.
-#
-# ⛔ THE ALLOWLIST IS A LOOKAHEAD, NOT A SECOND grep -v. It used to be
-# `grep -nP <banned> | grep -vP <allowed>`, and grep -v drops the whole LINE, so
-# a line carrying an allowed marker hid every banned emoji beside it: `⛔ never
-# use <party emoji>` passed the check. The lookahead excludes the CHARACTER, so
-# the line is still reported for the character that is wrong.
-EMOJI_NOTE=""
-# ⚠ The probe tests the ACTUAL pattern shape, not merely whether -P exists.
-# This machine's grep has -P but its PCRE is not in UTF-8 mode by default, so
-# every `\x{...}` above U+00FF is refused with "character value too large". The
-# `(*UTF)` prefix turns it on. Testing for -P alone reported the check as
-# available and then printed that error on every run.
-if printf '\342\255\220' | grep -qP '(*UTF)[\x{2B50}]' 2>/dev/null; then
-  bad=$(printf '%s\n' "$FILES" | tr '\n' '\0' \
-    | xargs -0 grep -nP '(*UTF)(?![\x{26D4}\x{2B50}\x{26A0}\x{2705}\x{274C}])[\x{1F300}-\x{1FAFF}\x{2190}-\x{21FF}\x{2300}-\x{23FF}\x{2500}-\x{27BF}\x{2B00}-\x{2BFF}\x{FE0F}]' 2>/dev/null \
-    | head -5 || true)
-  if [ -n "$bad" ]; then
-    printf '%s\n' "$bad" | while IFS= read -r b; do
-      printf '  %s\n' "$(printf '%s' "$b" | cut -c1-110)"
-    done > "$TMP/emoji"
-    while IFS= read -r e; do
-      report "an emoji outside the five defined characters: $e"
-    done < "$TMP/emoji"
-  fi
-else
-  EMOJI_NOTE="⚠ the emoji check needs a grep with -P and was skipped"
-fi
+# ⚠ It is the same move the control-byte rule made out of this file, for the
+# same reason, and it is why the markdown-only scan left 2290 characters in 22
+# scripts unchecked. ⛔ Run both: this one for documents, that one for the
+# whole tree.
 
-# ── report ──────────────────────────────────────────────────────────────────
+# -- report ------------------------------------------------------------------
 if [ "$JSON" = "1" ]; then
   printf '{"schema":"check-docs/1","problems":%s,"files":%s,"links":%s,"shell_blocks":%s}\n' \
     "$COUNT" "$NFILES" "$NLINKS" "$NBLOCKS"
@@ -278,11 +256,9 @@ fi
 
 if [ "$COUNT" -gt 0 ]; then
   printf 'documentation check failed, %s problem(s):\n\n%s\n' "$COUNT" "$PROBLEMS"
-  [ -n "$EMOJI_NOTE" ] && printf '%s\n' "$EMOJI_NOTE"
   exit 1
 fi
 
 printf 'docs ok: %s files, %s relative links, %s shell blocks. Links and prose clean.\n' \
   "$NFILES" "$NLINKS" "$NBLOCKS"
-[ -n "$EMOJI_NOTE" ] && printf '%s\n' "$EMOJI_NOTE"
 exit 0

@@ -18,9 +18,11 @@
 # every .ts, .py, .rs and .sh in the tree went unchecked, so it moved to
 # check-control-bytes.ps1, which reads every text file. Run both.
 #
-# It also enforces the mechanical half of the prose rule: no em dash, and no
-# emoji outside the five this repository defines. docs/conventions/prose.md is
-# the rule; this is the part a machine can hold.
+# ⚠ THE CHARACTER HALF OF THE PROSE RULE IS NOT HERE. No em dash and no
+# character outside the five belong to check-markers.ps1, which reads every
+# tracked text file rather than markdown alone. Run both. What stays here is
+# what is specific to a document: links, fenced blocks, placeholders, banned
+# vocabulary and orphan pages.
 #
 # ⛔ WHAT IT DOES NOT CHECK IS WHETHER A CLAIM IS TRUE. That is a reading, and
 # it belongs to the review pass. A guard that tried to verify prose would
@@ -150,20 +152,7 @@ foreach ($rel in $files) {
     if (-not $dir) { $dir = '.' }
     $linkCheck = -not (Test-LinkExempt $rel)
 
-    # ── em dash, outside fences and code spans ──────────────────────────────
-    $fence = $false
-    $n = 0
-    foreach ($line in ($text -split "`r?`n")) {
-        $n++
-        if ($line -match '^[ \t]*```') { $fence = -not $fence; continue }
-        if ($fence) { continue }
-        $clean = [regex]::Replace($line, '`[^`]*`', '')
-        if ($clean.Contains([char]0x2014)) {
-            Add-Problem ($rel + ':' + $n + ' em dash. docs/conventions/prose.md')
-        }
-    }
-
-    # ── links ───────────────────────────────────────────────────────────────
+    # -- links ---------------------------------------------------------------
     foreach ($t in (Get-LinkTarget $text)) {
         $target = $t.Target
         if ($target -match '^(https?:|mailto:)' -or -not $target) { continue }
@@ -190,7 +179,7 @@ foreach ($rel in $files) {
     }
 }
 
-# ── fenced shell blocks ─────────────────────────────────────────────────────
+# -- fenced shell blocks -----------------------------------------------------
 foreach ($rel in $files) {
     $full = Join-Path $root $rel
     if (-not (Test-Path -LiteralPath $full -PathType Leaf)) { continue }
@@ -236,7 +225,7 @@ foreach ($rel in $files) {
     }
 }
 
-# ── a page nothing links to ─────────────────────────────────────────────────
+# -- a page nothing links to -------------------------------------------------
 # ⛔ AN UNLINKED PAGE IS NOT READ, SO IT IS NOT CORRECTED, and that is the state
 # every stale document passes through on the way to being wrong.
 # Roots are exempt: a README is an entry point, and the files at the repository
@@ -249,60 +238,17 @@ foreach ($rel in $files) {
     }
 }
 
-# ── only the five defined characters ──────────────────────────────────────────
-# ⭐ .NET regex speaks unicode natively, so unlike the sh twin this rule never
-# has to degrade. The sh side needs a grep with -P in UTF-8 mode and says so
-# when it does not have one.
-# ⚠ CODEPOINTS, NOT A REGEX CLASS. .NET does not understand `\u{1F300}`: that
-# is PCRE and JavaScript syntax, and .NET reads it as `\u` plus a brace and
-# throws "Insufficient or invalid hexadecimal digits". Astral characters would
-# otherwise need surrogate pairs spelled out by hand. Comparing integers is
-# both correct and readable, and it keeps these ranges identical to the sh
-# twin's, which is what check-twins compares.
-$ranges = @(
-    @(0x1F300, 0x1FAFF),
-    @(0x2190, 0x21FF),
-    @(0x2300, 0x23FF),
-    @(0x2500, 0x27BF),
-    @(0x2B00, 0x2BFF),
-    @(0xFE0F, 0xFE0F)
-)
-# The five this repository defines, and nothing else. prose.md is the rule:
-# three prose markers, then two status glyphs for machine output and result
-# tables. ⛔ Adding a sixth is a change to prose.md first, and to both twins.
+# -- the character rule moved, it was NOT dropped -------------------------
+# ⛔ THE FIVE-CHARACTER ALLOWLIST AND THE EM-DASH RULE NOW LIVE IN
+# check-markers.ps1, over EVERY tracked text file rather than over markdown
+# alone. Two checks enforcing one rule is two places for it to be wrong, and
+# these two would have been wrong differently: this one strips fenced blocks
+# and code spans before it looks and a whole-tree scan that did not would
+# refuse the page that names the character it bans.
 #
-# ⚠ This twin tests one CHARACTER at a time, so it never had the line-level
-# false negative the sh twin was carrying. Keep it that way: a per-line test
-# here would hide a banned emoji sitting beside an allowed marker.
-$allowed = @(0x26D4, 0x2B50, 0x26A0, 0x2705, 0x274C)
-foreach ($rel in $files) {
-    $full = Join-Path $root $rel
-    if (-not (Test-Path -LiteralPath $full -PathType Leaf)) { continue }
-    $n = 0
-    foreach ($line in ([System.IO.File]::ReadAllText($full) -split "`r?`n")) {
-        $n++
-        for ($i = 0; $i -lt $line.Length; $i++) {
-            $cp = [int]$line[$i]
-            # ⚠ A surrogate pair is ONE character. Reading the halves as two
-            # separate code units puts every emoji above U+FFFF in the D800
-            # range, which is in none of the ranges above, so every one of them
-            # would be missed.
-            if ([char]::IsHighSurrogate($line[$i]) -and ($i + 1) -lt $line.Length) {
-                $cp = [char]::ConvertToUtf32($line[$i], $line[$i + 1])
-                $i++
-            }
-            if ($allowed -contains $cp) { continue }
-            foreach ($r in $ranges) {
-                if ($cp -ge $r[0] -and $cp -le $r[1]) {
-                    $shown = $line
-                    if ($shown.Length -gt 90) { $shown = $shown.Substring(0, 90) }
-                    Add-Problem ('an emoji outside the five defined characters: ' + $rel + ':' + $n + ':' + $shown)
-                    break
-                }
-            }
-        }
-    }
-}
+# ⚠ It is the same move the control-byte rule made out of this file, for
+# the same reason. ⛔ Run both: this one for documents, that one for the
+# whole tree.
 
 $count = $script:count
 

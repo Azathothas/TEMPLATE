@@ -133,9 +133,16 @@ short form:
 - credentials of any kind, including expired ones and ones that look redacted;
 - local environment files, whatever they are called in this ecosystem;
 - build output, dependency directories, local database files;
-- cloned reference trees. They are re-clonable from a URL, and the **derived**
-  write-up is what gets tracked. A required-reading file that exists on one
-  machine is one deletion away from leaving every claim built on it unsourced.
+⛔ **A cloned reference tree is NOT on that list, and it used to be.** The
+reasoning was that a tree is re-clonable from the URL its write-up records, so
+only the derived file needed tracking. Two sweeps proved otherwise: one kept
+its conclusions and deleted eleven clones, leaving the next session to re-fetch
+all eleven to check one citation, and one lost its data entirely because the
+directory it used was ignored. ⭐ The corpus is the evidence, and a conclusion
+nobody can re-check is an opinion.
+[`../methodology/references.md`](../methodology/references.md) section 4 is the
+rule, and ⚠ where a corpus is genuinely too large for every clone it goes on its
+own branch, which is still tracked.
 
 ⚠ **`.gitignore` only applies to files git is not already tracking.** Adding a
 line does not untrack what is already in. Check before assuming a rule took

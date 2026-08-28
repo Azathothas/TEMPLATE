@@ -93,8 +93,9 @@ afternoon.
 
 - ⛔ **Secrets are listed before the files exist**, so one can never be staged
   by accident. A credential ignored after the fact was trackable in between.
-- ⛔ **`.gitignore` only applies to files git is not already tracking.** Adding
-  a line does not untrack what is already in.
+- ⛔ **An ignore rule does not untrack anything already committed.**
+  [`../docs/conventions/git.md`](../docs/conventions/git.md) carries the rule
+  and the command that proves whether one took effect.
 - ⛔ **The whole Windows reserved-device set is ignored, not only `nul`.**
   `CON`, `PRN`, `AUX`, `NUL`, `COM1` to `COM9`, `LPT1` to `LPT9`. Your own
   `2>/dev/null` creates one under a shell that does not map `/dev/null`, and
@@ -116,10 +117,13 @@ afternoon.
 git add -f bench/the-one-that-matters.json
 ```
 
-- ⚠ **A cloned reference tree is not committed; the write-up is.** The trees are
-  re-clonable from the URL the write-up records. A required-reading file that
-  exists on one machine is one deletion away from leaving every claim built on
-  it unsourced. See
+- ⛔ **A cloned reference tree IS committed, and these files no longer ignore
+  one.** The rule used to be the reverse, on the reasoning that a tree is
+  re-clonable from the URL its write-up records. Two sweeps paid for the
+  correction: one deleted eleven clones and left the next session re-fetching
+  all of them to check a citation, and one lost its data outright because the
+  directory was ignored. ⚠ Where a corpus is too large for every clone, it goes
+  on its own branch, which is still tracked. See
   [`../docs/methodology/references.md`](../docs/methodology/references.md).
 
 ---

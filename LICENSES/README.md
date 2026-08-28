@@ -69,34 +69,6 @@ patent rights, and several large organisations refuse it for that reason.
 Apache-2.0 is not available to you. ⭐ Check what you depend on **before**
 choosing, not after.
 
-⛔ **A public repository with no licence is not open source.** Default copyright
-applies, which means nobody may legally use it, and that ambiguity is worse
-than either clear answer.
-
----
-
-## Dependencies
-
-⛔ **Record the licence determination for anything vendored or derived from, and
-the evidence for each.**
-
-The determination is worth writing down once because re-deriving it is slow and
-because a wrong one is untraceable otherwise. Record where the answer came from:
-a licence file on disk, a manifest key, or a line in a README, in that order of
-confidence.
-
-⚠ The ones that need care, in the order they cause trouble:
-
-- **No licence file, no manifest key, no statement anywhere.** Not permissive.
-  Not public domain. Simply unlicensed, and unusable.
-- **A manifest that says one thing and a licence file that says another.** The
-  file is the stronger evidence, and the conflict itself is worth recording.
-- **A README line and nothing else**, especially when the project forks
-  something with a different licence.
-- **A dual licence.** Note both, and note which you are relying on.
-- **A template placeholder left in**, where the holder and year were never
-  filled. It is technically no grant to anyone.
-
 ---
 
 ## What is here

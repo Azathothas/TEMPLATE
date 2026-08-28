@@ -21,7 +21,12 @@ rule: these summaries exist to route, not to substitute.
 | [`choosing-a-work-model.md`](methodology/choosing-a-work-model.md) | stage or todo, and the migration between them. Deleted once chosen. |
 | [`work-stages.md`](methodology/work-stages.md) | the stage model: numbered units, a plan each, a handoff each. |
 | [`work-todo.md`](methodology/work-todo.md) | the todo model: an index, a record, entries that close in place. |
-| [`references.md`](methodology/references.md) | how to study somebody else's project, including the step that always gets skipped. |
+| [`references.md`](methodology/references.md) | how to study somebody else's project, including the two steps that always get skipped. |
+| [`experiments.md`](methodology/experiments.md) | taking your own measurements: the script, the conditions, and why a negative result is committed. |
+| ⭐ [`vendoring.md`](methodology/vendoring.md) | third-party code in this tree. ⛔ Patch it here; upstreaming is not a topic. |
+| ⭐ [`history.md`](methodology/history.md) | where the story goes, so it stops being written into the pages that answer questions. |
+| [`template-sync.md`](methodology/template-sync.md) | taking a later version of the template into a project that adopted it already. |
+| [`lean-adoption.md`](methodology/lean-adoption.md) | ⭐ taking the engineering without shipping any agent-facing content. |
 
 ## conventions: how things are written here
 
@@ -35,7 +40,8 @@ rule: these summaries exist to route, not to substitute.
 | ⭐ [`shell.md`](conventions/shell.md) | quoting, heredocs, exit codes, streams, line endings, and the platform traps. |
 
 ⚠ The entry points that live at the repository root rather than under `docs/`:
-[`ADOPT.md`](../ADOPT.md) for an existing repository elsewhere, and
+⭐ [`ROUTE.md`](../ROUTE.md), the one paste that works out which job a session
+is, [`ADOPT.md`](../ADOPT.md) for an existing repository elsewhere, and
 [`MAINTAIN.md`](../MAINTAIN.md) for improving the template itself.
 
 ## security
@@ -67,6 +73,7 @@ containing the byte it warns about.
 | --- | --- |
 | ⭐ [`AGENTS.md`](templates/AGENTS.md) | the project's router, carrying the task routing table. Under 300 lines. |
 | [`PROGRESS.md`](templates/PROGRESS.md) | the record. The one file every session reads first. |
+| ⭐ [`HISTORY.md`](templates/HISTORY.md) | `docs/history/README.md`. The destination for superseded wording, created at bootstrap even though it starts empty. |
 | [`INDEX.md`](templates/INDEX.md) | the entry list, in todo mode. |
 | [`RULES.md`](templates/RULES.md) | how this repository is worked on, with what each rule cost. |
 | [`HUMAN.md`](templates/HUMAN.md) | the operator's side: setup, validation, runbooks, prompts. |
@@ -85,8 +92,8 @@ containing the byte it warns about.
   drifts, and the copy a reader trusts is the wrong one.
 - ⛔ **Amend in place.** When a rule changes, the rule is rewritten and the
   superseded wording moves to a history file. Stacking a dated box under retired
-  text has a documented failure mode: an agent reads the first paragraph of the
-  box, stops, and acts on the retired rule.
+  text has a documented failure mode, and
+  [`conventions/prose.md`](conventions/prose.md) records what it broke.
 - ⛔ **Every claim verified before it is written.** Writing the documentation is
   the audit, and the most confident sentence in a file is regularly the only
   false one.

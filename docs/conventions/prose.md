@@ -36,6 +36,31 @@ paragraph carries one has no markers at all. If a page needs more than a
 handful, the page is a rulebook pretending to be a summary and it should be
 split.
 
+⛔ **This has a ceiling now, and it is checked.** The rule above was
+unenforceable for as long as it was only a sentence, and an agent that kept
+strictly to the five allowed characters spammed them until the documents were
+unreadable. Keeping to the allowlist was treated as compliance; nothing said
+how many.
+
+[`check-markers.sh`](../../scripts/common/check-markers.sh) refuses a file
+carrying more than **30 markers per 100 non-blank lines**. Measured over three
+trees on 2026-08-28:
+
+| tree | markers per 100 non-blank lines | worst file |
+| --- | --- | --- |
+| the one that reads worst | 38.6 | 53.3 |
+| this template | 9.0 | 26.3 |
+| the one that reads best | 8.6 | 21.8 |
+
+⭐ **The two adopter trees had been ranked by eye before any of this was
+counted, and the ranking came out in that order.** ⚠ Only those two were
+ranked; this tree was not placed against them, and its number simply falls
+between. One number reproducing a reading is the argument for having the
+number.
+
+⚠ **The ceiling is a long way above good practice on purpose.** It is a refusal
+of the unreadable, not a target: a page at 25 is already dense.
+
 ---
 
 ## Status glyphs are a second tier, and a different job
@@ -63,7 +88,19 @@ symbol denotes a state. The reasoning is right and the rule is unenforceable: no
 check can decide what is anthropomorphic, so the boundary would move every time
 somebody argued for one more glyph, and a vocabulary that grows stops meaning
 anything. An explicit five-character allowlist is something
-[`check-docs.sh`](../../scripts/common/check-docs.sh) can hold, and it holds it.
+[`check-markers.sh`](../../scripts/common/check-markers.sh) can hold, and it
+holds it.
+
+⛔ **The allowlist covers EVERY tracked text file, not just markdown.** It used
+to live in `check-docs` and scan documents alone. On the day it was widened,
+this repository's own scripts held **2290** characters outside the five across
+22 files: a rule that only ever looked at documents had left every script it
+ships unchecked, and a project built from this template found the same shape in
+its own tree and had to clear it before it could arm a check at all.
+
+⭐ **A specimen inside a code span or a fenced block is permitted**, and it has
+to be: a page that bans a character cannot otherwise show a reader which
+character it means.
 
 ⚠ **The linter owns the allowlist. It does not own the tiers.** Nothing
 mechanical can tell a result table from a paragraph, so a glyph used as a marker
@@ -87,8 +124,13 @@ about publishing, and the incident report is the reason this section exists.
 What to do instead:
 
 1. **Rewrite the rule to what it is now.** The current text is the only text.
-2. **Move the superseded wording to a history file**, with the date and why it
-   changed. A separate file, not a box on the live page.
+2. **Move the superseded wording to the history directory**, with the date and
+   why it changed. A separate file, not a box on the live page.
+   ⭐ [`../methodology/history.md`](../methodology/history.md) says where that
+   is and what the directory's own rules are. It exists because this
+   instruction used to say "a history file" without saying where, so the
+   superseded wording went into the page that was superseding it, and a whole
+   document set filled up with narrative.
 3. **Link to it once**, from the rule, in a sentence.
 
 The story of a change belongs in the changelog or the history file. The
@@ -136,6 +178,19 @@ copy a reader trusts is the wrong one.
 Every fact lives in exactly one document. If it must appear in a second place,
 derive it there or have a check assert that the two agree.
 
+⛔ **This is checked now, and it had drifted badly while it was only a
+sentence.** [`check-one-home.sh`](../../scripts/common/check-one-home.sh)
+refuses a sentence of 12 words or more that appears in two documents. Its first
+run over this repository found **42** duplicates, five of them in the skeleton
+this template ships for recording a project's rules.
+
+⚠ **Two exemptions, both narrow.** The entry-point routers are exempt from each
+other, because each states the absolutes in full for a session that may be
+handed exactly one of them; a router sharing a sentence with anything else is
+still refused. And the history directory is exempt entirely, because a
+superseded page states things the live pages now state differently, which is
+the point of it. [`../methodology/history.md`](../methodology/history.md).
+
 When two documents conflict, the technical reference wins and the other one is
 the defect. Fix it in the same change and say so.
 
@@ -149,6 +204,14 @@ A fixed defect belongs in a reference page only when a reader needs it to use
 the thing correctly. "The allocator takes a write lock now" is history and
 belongs in the work record. "Two lints exist because another client will refuse
 the file" is a constraint and stays.
+
+⛔ **The history goes to the history directory, and there is one.**
+[`../methodology/history.md`](../methodology/history.md). An agent working from
+this template wrote its project's history into every document it touched;
+nothing it wrote was untrue and the result was unreadable. ⚠ The instinct is
+right, which is why forbidding it does not work: a superseded explanation is
+often the only record of why a design has its shape. It needed a destination,
+not a prohibition.
 
 ⚠ An unlinked page is not read, so it is not corrected, and that is the state
 every stale document passes through on the way to being wrong. A page nothing
@@ -170,9 +233,16 @@ check sees:
 3. **No literal control bytes.** Documentation about escape sequences has a
    proven habit of containing the character it is warning about.
 4. **Every relative link resolves**, and every cited path exists.
-5. **No em dash, no emoji outside the five, none of the banned vocabulary.**
-   The five are the three prose markers plus the two status glyphs.
+5. **None of the banned vocabulary.**
 6. **No page under the docs directory that nothing links to.**
+
+⚠ **The character rules are checked by a different script, over a wider
+scope.** No em dash, nothing outside the five, and the density ceiling belong
+to [`check-markers.sh`](../../scripts/common/check-markers.sh), which reads
+every tracked text file rather than the documents alone.
+[`../../scripts/README.md`](../../scripts/README.md) says why one rule gets one
+enforcer: two checks holding one rule is two places for it to be wrong, and
+these two would have been wrong differently.
 
 ⛔ **What a linter cannot check is whether a claim is true.** That is a reading,
 and it belongs to the review pass. A guard that tried to verify prose would

@@ -29,6 +29,11 @@ it goes.
 **3. Paste a prompt from [`prompts/`](prompts/), with your answers, into a
 fresh agent session.**
 
+⭐ **Or paste nothing but [`../ROUTE.md`](../ROUTE.md)'s URL** and let the agent
+work out which of these it is from the tree. That is the shorter path and it
+covers cases this table does not, including re-syncing a later version of the
+template and adopting it with no agent-facing content at all.
+
 | you are | paste |
 | --- | --- |
 | starting something new | [`prompts/00-new-project.md`](prompts/00-new-project.md) |

@@ -7,7 +7,7 @@
 # noticed had fallen behind. The failure is silent, because each one works fine
 # on its own host and nobody runs both.
 #
-# ── ⭐ WHY ONLY THE PROBE HAS A TWIN, AND WHY THAT IS NOT AN OVERSIGHT ───────
+# -- ⭐ WHY ONLY THE PROBE HAS A TWIN, AND WHY THAT IS NOT AN OVERSIGHT -------
 #
 # Every other check here is POSIX sh alone, deliberately. Two implementations
 # of one rule is two places for that rule to be wrong, so a twin has to earn
@@ -28,7 +28,7 @@
 # run, and wherever a twin exists, THIS CHECK covers it. Adding a twin without
 # adding it here is how drift starts.
 #
-# ── WHAT DIFFERENCE IS CORRECT ──────────────────────────────────────────────
+# -- WHAT DIFFERENCE IS CORRECT ----------------------------------------------
 #
 # ⚠ Some disagreement is honest and must not be flattened away. Each twin
 # reports what ITS OWN host can reach, and on a Windows machine with msys
@@ -283,6 +283,15 @@ compare_pair() {
 compare_pair "check-docs"           check-docs.sh           "--json"          check-docs.ps1           "-Json"
 compare_pair "check-placeholders"   check-placeholders.sh   "--json"          check-placeholders.ps1   "-Json"
 compare_pair "check-control-bytes"  check-control-bytes.sh  "--json"          check-control-bytes.ps1  "-Json"
+# ⚠ THIS PAIR IS THE ONE MOST WORTH COMPARING AND THE ONE LEAST PROVED BY THE
+# COMPARISON. Both halves decode UTF-8 by hand, from opposite directions: the
+# sh half walks bytes with an ordinal table and the PowerShell half walks .NET
+# chars and has to rejoin a surrogate pair. Two decoders agreeing on a tree
+# that contains no character outside the five is two decoders agreeing about
+# nothing. ⭐ Prove this one with a planted character, in both halves, the way
+# scripts/README.md says to. It was, on U+2014 and on U+1F600.
+compare_pair "check-markers"        check-markers.sh        "--json"          check-markers.ps1        "-Json"
+compare_pair "check-one-home"       check-one-home.sh       "--json"          check-one-home.ps1       "-Json"
 compare_pair "check-changelog"      check-changelog.sh      "--json"          check-changelog.ps1      "-Json"
 compare_pair "check-no-secrets"     check-no-secrets.sh     "--json"          check-no-secrets.ps1     "-Json"
 compare_pair "check-no-secrets pub" check-no-secrets.sh     "--public --json" check-no-secrets.ps1     "-Public -Json"
@@ -350,5 +359,5 @@ if [ "$DRIFT" -gt 0 ]; then
   printf 'how the check stops checking.\n'
   exit 1
 fi
-printf '✓ every twin pair agrees on this tree.\n'
+printf '✅ every twin pair agrees on this tree.\n'
 exit 0

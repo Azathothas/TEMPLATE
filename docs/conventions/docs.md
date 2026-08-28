@@ -28,6 +28,16 @@ believes, and follows into a rule that was never meant to apply.
 | `docs/lessons.md` | what was learned, tagged, with the source |
 | the work plans | one per unit, plus the template they are authored from |
 | the handoffs | in stage mode. The durable memory between sessions. |
+| ⭐ `docs/history/` | **the story.** Superseded wording, reversed decisions, dead ends, reference sweeps, review passes. ⛔ Everything above says what is true now; this says what was believed and why that changed. [`../methodology/history.md`](../methodology/history.md). |
+| `RESUME.md` | ⚠ written at the START of a session and refreshed as work moves, so a session that dies mid-task still hands something over. Overwritten every session, never appended to. [`../methodology/sessions.md`](../methodology/sessions.md). |
+
+⛔ **`docs/history/` exists so that none of the rows above fill up with
+narrative.** An agent working from this template wrote its project's history
+into every document it touched; nothing was untrue and the result was
+unreadable. ⚠ The instinct was right, which is why forbidding it did not work:
+a superseded explanation is worth keeping for the reason
+[`prose.md`](prose.md) gives. It needed a destination, and the rule that told it to move the wording
+never named one.
 
 ---
 

@@ -56,6 +56,16 @@ Model:                 stage | todo | you-choose
                         use todo. docs/methodology/choosing-a-work-model.md is
                         the full rule.>
 
+Agent-facing files:    keep | none
+                       <blank = keep. "none" takes the checks, the conventions,
+                        the probe and the dotfiles and ships NO file addressed
+                        to a machine: no router, no methodology directory, no
+                        skeletons. Pick it for a compliance rule, or because
+                        you do not want them, which is a complete reason.
+                        docs/methodology/lean-adoption.md is what happens then.
+                        Decide now: it is a selection, and stripping it later
+                        leaves a history full of what you did not want.>
+
 ENVIRONMENT
 
 Host:                  <blank = this machine, and the agent measures it. Fill
@@ -117,7 +127,7 @@ configured repository, a plan, and the first unit of work, and it stops for
 your approval before implementing anything.
 
 ⛔ **`bootstrap/` is deleted at the end of the bootstrap**, this file with it.
-It is scaffolding for starting a project, and a project that has started does
+[`README.md`](README.md) says why this directory goes: a started project does
 not need the instructions for starting. If you want to keep your filled-in
 answers, the agent copies them into the project's own record first, with the
 secrets section stripped.

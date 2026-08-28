@@ -115,7 +115,7 @@ later becomes a named regression test.}}
 Specified in [`docs/methodology/gate.md`](../docs/methodology/gate.md). This
 stage's specifics:
 
-**(a) Headless suites.** {{the exact commands}} · ⛔ file count against disk ·
+**(a) Headless suites.** {{the exact commands}} , ⛔ file count against disk ,
 ⛔ every guard exits 0, read unpiped.
 
 **(b) The agent drives the real thing.** {{how to reach it, as which
@@ -126,8 +126,8 @@ identities, and the exact flow that makes the change provable}}
 [`docs/methodology/reviews.md`](../docs/methodology/reviews.md). Findings
 recorded per pass, and fixed.
 
-Then: the record updated in the same change · the handoff written · the summary
-table printed and saved · the next prompt printed in chat only.
+Then: the record updated in the same change , the handoff written , the summary
+table printed and saved , the next prompt printed in chat only.
 
 ---
 

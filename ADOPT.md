@@ -13,9 +13,30 @@ Fetch the rest only once you know which parts apply.
 
 Base URL for anything named below:
 
-```bash
-TEMPLATE_RAW=https://raw.githubusercontent.com/Azathothas/TEMPLATE/main
+```text
+https://raw.githubusercontent.com/Azathothas/TEMPLATE/main
 ```
+
+⚠ **The fetch commands in this file are written POSIX-first, and neither half
+of `curl ... -o /tmp/x` is portable.** Establish two things once and use your
+own spelling of them throughout:
+
+| | on a POSIX host | ⚠ on Windows |
+| --- | --- | --- |
+| the fetcher | `curl` or `wget` | ⛔ `curl` in Windows PowerShell 5.1 is an **alias for `Invoke-WebRequest`** and takes different arguments. Use `curl.exe` by name, or `Invoke-WebRequest`. |
+| the scratch directory | `${TMPDIR:-/tmp}` | ⛔ **`/tmp` does not exist.** Use `$env:TEMP`. |
+
+⭐ **Probe rather than assume.** An absent tool announces itself; an aliased one
+does not, and that is the whole hazard. Measured on one Windows 11 machine,
+2026-08-28.
+
+```powershell
+(Get-Command curl -EA SilentlyContinue).CommandType; $env:TEMP
+```
+
+⚠ **On a Windows host, prefer the `.ps1` half of every script named below** and
+run it with `pwsh -NoProfile -File`. The manifest at the end says which files
+ship as a pair.
 
 ---
 
@@ -46,12 +67,21 @@ measured, so its owner can decide what to tidy.
 **Fetch the probe and run it.** It is read-only and it exits 0 whether or not
 anything is missing.
 
+⚠ `BASE` and `SCRATCH` below are the two values you established at the top of
+this file. They are named rather than hardcoded because neither has a portable
+spelling.
+
 ```bash
-curl -sSL -o /tmp/doctor.sh "$TEMPLATE_RAW/scripts/doctor/doctor.sh"
+BASE=https://raw.githubusercontent.com/Azathothas/TEMPLATE/main
+SCRATCH=${TMPDIR:-/tmp}
 ```
 
 ```bash
-sh /tmp/doctor.sh --json
+curl -sSL -o "$SCRATCH/doctor.sh" "$BASE/scripts/doctor/doctor.sh"
+```
+
+```bash
+sh "$SCRATCH/doctor.sh" --json
 ```
 
 On a Windows host with no POSIX shell, fetch `scripts/doctor/doctor.ps1`
@@ -66,19 +96,19 @@ the diagnostic, and it is the most valuable thing this template gives an
 existing repository. Each one is read-only.
 
 ```bash
-for c in check-no-secrets check-docs check-placeholders check-control-bytes; do curl -sSL -o "/tmp/$c.sh" "$TEMPLATE_RAW/scripts/common/$c.sh"; done
+for c in check-no-secrets check-docs check-markers check-control-bytes; do curl -sSL -o "$SCRATCH/$c.sh" "$BASE/scripts/common/$c.sh"; done
 ```
 
 ```bash
-sh /tmp/check-no-secrets.sh --public
+sh "$SCRATCH/check-no-secrets.sh" --public
 ```
 
 ```bash
-sh /tmp/check-docs.sh
+sh "$SCRATCH/check-docs.sh"
 ```
 
 ```bash
-sh /tmp/check-control-bytes.sh
+sh "$SCRATCH/check-control-bytes.sh"
 ```
 
 ⚠ On a Windows host with no POSIX shell, fetch the `.ps1` of each name instead
@@ -195,7 +225,8 @@ It is opinionated on purpose. Offer it; do not apply it.
 
 ## The manifest
 
-Fetch only what the approved set names. Everything is under `$TEMPLATE_RAW`.
+Fetch only what the approved set names, under the base URL at the top, with the
+fetcher you established there.
 
 ⛔ **Every check under `scripts/common/` ships as a PAIR**: `NAME.sh` and
 `NAME.ps1`, same rules, same exit codes, same `--json` answer. Fetch the half
@@ -216,6 +247,7 @@ different answer, which is the worse of the two.
 | `scripts/doctor/README.md` | its contract and schema |
 | `scripts/common/check-no-secrets.sh` | what must never be published |
 | `scripts/common/check-remote-items.sh` | ⭐ verifies what dependency bots and contributors open, rather than trusting the description. Needs `gh` and `jq`. |
+| `scripts/common/check-gate.sh` | ⭐ runs every check above in one command and reads each exit code unpiped. A skip is reported as a skip. |
 | `scripts/README.md` | the contract every check follows |
 | `docs/security/secrets.md` | what never enters the tree, and what to do when something did |
 | `docs/security/remote-ops.md` | the tiers governing anything outside this machine |
@@ -231,6 +263,14 @@ different answer, which is the worse of the two.
 | `docs/conventions/docs.md` | one fact one home, and the changelog rules |
 | `docs/conventions/shell.md` | ⭐ quoting, exit codes, streams, line endings, platform traps. Useful in any repository, opinionated about none of them. |
 | `docs/conventions/forbidden-patterns.md` | the table to grep yourself against |
+| `scripts/common/check-markers.sh` | ⚠ the character allowlist and the marker density. **Offer it; do not apply it.** It is the most opinionated check here and a repository with an established voice should not inherit it by accident. |
+
+**Once the project carries third-party source:**
+
+| path | what it gives you |
+| --- | --- |
+| ⭐ `docs/methodology/vendoring.md` | patch what you vendor, record the change neutrally, reconcile a release by reading rather than by preferring. ⛔ It also closes the topic of upstreaming, which is the rule an agent in somebody else's repository most needs. |
+| `scripts/common/mine-repo.sh` | fetch a repository's tracker and tree and keep them, rather than writing a fetcher per session |
 
 **Once the project wants the working method:**
 
@@ -279,11 +319,11 @@ Run the same checks you ran in phase 0, and **compare against those numbers**.
 An adoption that did not move a number did not do anything.
 
 ```bash
-sh /tmp/check-docs.sh
+sh "$SCRATCH/check-docs.sh"
 ```
 
 ```bash
-sh /tmp/check-no-secrets.sh --public
+sh "$SCRATCH/check-no-secrets.sh" --public
 ```
 
 Then review your own work, with three different questions rather than one

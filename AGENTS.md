@@ -26,8 +26,16 @@ have different rules.
 | A codebase that already exists, with this template's files sitting beside it. | **Adopt, in place** | [`bootstrap/BOOTSTRAP.md`](bootstrap/BOOTSTRAP.md), which branches to [`docs/methodology/ingest.md`](docs/methodology/ingest.md) |
 | The operator wants to change the template itself: a rule, a script, a dotfile. | **Maintain** | [Maintaining the template](#maintaining-the-template), below. The paste-able prompt is [`MAINTAIN.md`](MAINTAIN.md). |
 
-⭐ **There is a fourth entry point, and you are probably not reading this file if
-you took it.** [`ADOPT.md`](ADOPT.md) is the self-contained procedure for an
+⚠ **Those three are not the only jobs, and the table above is a shortcut for
+the common ones.** A project may also be re-syncing a later version of this
+template, adopting it without any agent-facing content, or starting a new unit
+of work on a project that is already set up. ⭐ [`ROUTE.md`](ROUTE.md) is the
+entry point that covers every case: it classifies the situation from the tree,
+asks one grouped question only if it has to, and routes. It is what an operator
+pastes when they do not want to pick a prompt.
+
+⭐ **There is a further entry point, and you are probably not reading this file
+if you took it.** [`ADOPT.md`](ADOPT.md) is the self-contained procedure for an
 agent working inside **somebody else's repository**, which fetches what it needs
 over HTTPS and never clones this one. Two things distinguish it from the
 in-place adopt above:
@@ -96,6 +104,7 @@ every later session and a routine task is not.
 
 | directory | what is in it | read it when |
 | --- | --- | --- |
+| [`ROUTE.md`](ROUTE.md) | ⭐ the one paste that works out which job a session is | the operator pasted its URL and nothing else |
 | [`ADOPT.md`](ADOPT.md) | the self-contained procedure for an EXISTING repository elsewhere | an agent in another project fetched it |
 | [`MAINTAIN.md`](MAINTAIN.md) | the prompt the operator pastes to improve this template | changing the template itself |
 | [`bootstrap/`](bootstrap/) | the once-only path: the procedure, the operator's answer sheet, the copy-paste prompts | starting or adopting a project |
@@ -124,10 +133,13 @@ the topic. Reading the row is not reading the rule.
 | What never enters the tree | [`docs/security/secrets.md`](docs/security/secrets.md) |
 | How documents are written here | [`docs/conventions/prose.md`](docs/conventions/prose.md) |
 | Quoting, heredocs, encodings, line endings | [`docs/conventions/shell.md`](docs/conventions/shell.md) |
+| ⭐ Holding a session without ending the turn | [`docs/conventions/shell.md`](docs/conventions/shell.md) section 10 |
 | What a unit of work passes before it is done | [`docs/methodology/gate.md`](docs/methodology/gate.md) |
 | What a session owes at its start and its end | [`docs/methodology/sessions.md`](docs/methodology/sessions.md) |
+| ⭐ Third-party code in this tree | [`docs/methodology/vendoring.md`](docs/methodology/vendoring.md) |
+| Where a superseded explanation goes | [`docs/methodology/history.md`](docs/methodology/history.md) |
 
-Four are stated here in full, because they are absolute and because each has
+Six are stated here in full, because they are absolute and because each has
 been broken before:
 
 1. ⛔ **No tool is credited in a commit.** No co-author trailer naming a model,
@@ -139,6 +151,17 @@ been broken before:
 4. ⛔ **An exit code is read from the process that produced it, unpiped.**
    Piping a check into anything reports the pipeline's status, so a guard that
    failed reads as green.
+5. ⛔ **Nothing is opened on anybody else's repository.** No issue, no pull
+   request, no discussion, no comment, no fork. An agent once used an
+   authenticated CLI to open an issue and then a pull request upstream, unasked,
+   and the operator had to apologise to the maintainers.
+   [`docs/methodology/vendoring.md`](docs/methodology/vendoring.md) also closes
+   the topic of upstreaming a patch: fix it here, and do not raise it.
+6. ⛔ **A turn is never ended to wait**, and the harness's own scheduler,
+   monitor or wake-up tool is not a way around that. They end the turn by
+   design. [`docs/conventions/shell.md`](docs/conventions/shell.md) section 10
+   has the shapes that hold without one, and ⭐ the best of them uses no timer
+   at all.
 
 ---
 

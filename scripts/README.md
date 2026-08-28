@@ -2,6 +2,17 @@
 
 The probe, the checks, and the helpers a project inherits.
 
+⭐ **One command runs all of it**, and it is the one to reach for rather than
+typing a list from memory:
+
+```bash
+sh scripts/common/check-gate.sh
+```
+
+```bash
+pwsh -NoProfile -File scripts/common/check-gate.ps1 -Fast
+```
+
 | directory | what is in it |
 | --- | --- |
 | [`doctor/`](doctor/) | ⭐ the environment probe. Two implementations, one schema. Every project keeps this. |
@@ -65,13 +76,15 @@ from one twin's extension list changed no number here, because this repository
 has no `.py` file. Dropping `.md` was caught instantly. ⭐ Prove a scope rule
 with a fixture, not by trusting the comparison to notice.
 
-### The three things that do NOT have twins, and why
+### The things that do NOT have twins, or are not compared, and why
 
 | | |
 | --- | --- |
 | [`common/write-file.mjs`](common/) | ⛔ **It does not need one.** It is node, and node is the same program on every host: no `sed`, no `sort`, no shell built-ins, no aliases. The reason the sh checks needed twins does not apply to it. ⚠ What it needs instead is node itself, which is the one dependency anything under `scripts/` has, and the reason a project may decline this helper rather than inherit it. |
 | [`common/check-twins.sh`](common/) | ⛔ **It cannot have one.** It works by running both halves of every pair, so it needs a POSIX shell to run the sh half no matter what language it is written in. A PowerShell twin would still require `sh`, which is the exact dependency a twin exists to remove. It is a maintainer's tool and it runs where both implementations do: this machine, and the CI job that has `pwsh` on an Ubuntu runner. |
 | [`powershell-windows/wsl-ephemeral.ps1`](powershell-windows/) | ⛔ **No twin, and it must not get one.** It drives `wsl.exe`, which is a Windows feature. The POSIX "equivalent" would be a container or `systemd-nspawn`: a different tool solving a different problem, sharing no interface and no output. Calling those two a twin would put `check-twins.sh` in the position of comparing two unrelated programs, and the only way to make that pass is to compare nothing. |
+| [`common/check-gate`](common/) | ⭐ **Has both halves, and is deliberately NOT compared.** It invokes `check-twins`, so putting the pair in `check-twins`'s own list would recurse. ⚠ The two exclusions are a shared contract: dropping either reintroduces a hang that once left twenty stray shells open. |
+| [`common/mine-repo`](common/) | ⭐ **Has both halves, and is deliberately NOT compared.** A comparison would fetch a live third-party repository twice per run, making a local check depend on somebody else's uptime, and it writes a directory rather than a verdict. Proved by running both halves against one target instead, which is stronger evidence and caught a real defect. |
 
 ⭐ **The question to ask is whether the JOB exists on the other platform, not
 whether the language does.** `wsl-ephemeral` fails that test. Every check in
@@ -119,7 +132,7 @@ reports the **last** command's status, so a check that failed reads as green.
 
 ### `doctor/`
 
-What host is this, what is installed, and what is this repo. Read
+The environment probe. Read
 [`doctor/README.md`](doctor/README.md) for the schema and the measured
 runtimes.
 
@@ -142,21 +155,102 @@ examples that happens to describe a real system.
 public: emails, absolute home paths, long hex identifiers. In a private project
 those are legitimate content, which is why they are not the default.
 
+### `common/check-one-home.sh`
+
+Does any sentence of 12 words or more appear in two documents.
+
+⛔ **The rule was in `prose.md` from the start and nothing checked it**, so it
+drifted the way an unchecked rule always drifts. Its first run over this tree
+found **42** duplicated sentences of 8 words or more, ⭐ five of them in
+`docs/templates/RULES.md`, which is the skeleton this repository ships for
+recording a project's rules and which opened by saying it restated nothing.
+That file went from 198 lines to 134 and now links what it used to copy.
+
+⚠ **THE FIRST VERSION OF THE INSTRUMENT REPORTED ZERO AND WAS WRONG.** Its file
+collector handed git a quoted pathspec through a shell that treats a quote as
+an ordinary character, so it matched nothing and reported a clean tree it had
+never opened. ⭐ Both halves now refuse to report success over an empty scope,
+and that is the only reason the number above exists.
+
+⛔ **The three entry-point routers are exempt from each other and from nothing
+else.** `AGENTS.md`, `ROUTE.md` and `docs/templates/AGENTS.md` state the
+absolutes in full on purpose, because a session may be handed exactly one of
+them. ⚠ A sentence shared between a router and any other file is still refused,
+which was verified by planting one.
+
+⚠ It compares SENTENCES, so a fact restated in different words passes here and
+fails a review. That is the same split every prose rule has.
+
 ### `common/check-placeholders.sh`
 
 Did a template placeholder survive into a real file. Run at the end of a
 bootstrap, and as a gate afterwards.
 
+### `common/check-gate.sh`
+
+⭐ **Run the whole local gate with one command.** Part (a) of
+[`../docs/methodology/gate.md`](../docs/methodology/gate.md) is a list, and a
+list run by hand is run in the order somebody recalls it. The session that
+wrote this ran its gate five times and typed a different subset each time.
+
+It delegates and holds no rules of its own. ⛔ **A skipped check is reported as
+a skip, never as a pass**, because a runner that dropped one quietly and
+printed green would be the forbidden-patterns row about a step that exits 0
+having done nothing. `--strict` makes a skip a failure, which is what CI should
+pass; `--fast` drops `check-twins` and nothing else.
+
+⛔ **Zero passes is red whatever the skips say.** It produced exactly the
+opposite on its own first run: a broken presence test made every row report
+"not present", and it printed a green verdict over nothing at all. That is the
+defect its header describes, produced by the script itself, and it is the
+argument for the rule.
+
+⚠ **Neither half is in `check-twins.sh`'s pair list**, deliberately: this
+runner invokes `check-twins`, so comparing the two runners from inside it would
+recurse. An earlier version of this idea elsewhere did exactly that and left
+twenty stray shells holding their own files open.
+
 ### `common/check-docs.sh`
 
 Do the documents still resolve, and are they written the way this
 repository writes documents. Relative links, fenced shell blocks that
-parse, shell-unsafe placeholders, control bytes, em dashes, and the three
-defined markers.
+parse, shell-unsafe placeholders, banned vocabulary, and orphan pages.
 
 ⚠ The template directories are exempt from the **link** check only: their
 links are written relative to where the file will live in a project. The
 prose rules still apply to them.
+
+⛔ **The character rules are NOT here any more.** No em dash and no character
+outside the five moved to `check-markers.sh`, which reads every tracked text
+file rather than markdown alone. Two checks enforcing one rule is two places
+for it to be wrong, which is the same move the control-byte rule already made
+out of this file.
+
+### `common/check-markers.sh`
+
+Only the five defined characters, and not too many of them. Two rules, one
+subject, one home.
+
+⛔ **It reads every tracked text file.** The rule it inherited scanned markdown
+alone, and on the day it was widened this repository's own scripts held **2290**
+characters outside the five across 22 files. Every one was in a script, so the
+markdown-only version had never seen any of them.
+
+⭐ **The density ceiling is 30 markers per 100 non-blank lines, and the number
+is measured rather than chosen.** Over three trees on 2026-08-28: the one that
+reads worst 38.6 overall with a worst file of 53.3, this one 9.0 and 26.3, the
+one that reads best 8.6 and 21.8. ⭐ The two ADOPTER trees had been ranked by
+eye first and the ranking came out in that order. ⚠ This tree was not ranked
+against them; its number simply falls between.
+
+⚠ **Two exemptions, each load-bearing.** `LICENSES/*.txt` is canonical SPDX
+text compared byte-for-byte elsewhere, so a check asking anybody to edit it
+would be asking for a corruption. A **leading** byte-order mark is exempt
+because every `.ps1` here needs one; a mark anywhere else is still reported.
+
+⚠ **A specimen inside a code span is permitted**, because a page that bans a
+character cannot otherwise show which one, and this file could not describe the
+check without it.
 
 ### `common/check-twins.sh`
 
@@ -253,6 +347,58 @@ being maintained, once on a CRLF file whose LF search string matched nothing.
 is the reason this is a helper a project may decline rather than a check every
 project inherits. [`../docs/conventions/shell.md`](../docs/conventions/shell.md)
 section 1 is the reasoning, measured.
+
+### `common/mine-repo.sh`
+
+Fetch everything a reference sweep needs, and ⭐ **keep it**.
+
+⛔ **It exists because the evidence kept being thrown away.** One sweep kept its
+conclusions and deleted eleven clones, so every citation became a claim nobody
+could check. One session spent about fifteen minutes writing its own fetchers,
+produced real data, and deleted the data and the fetchers on the way out
+because both lived in session-local scratch. Same defect twice: the DERIVED
+file treated as the product and the EVIDENCE as scratch.
+
+It fetches metadata, issues and pull requests in both states, comments, review
+comments, releases, tags, discussions where it can reach them, and the tree with
+its commit captured **before** the strip. It writes a `PROVENANCE.md` naming the
+commit, the route, and ⛔ what it could not get.
+
+⚠ **It probes `gh` rather than assuming it**, because a token `command -v` says
+is there has been dead on a live run, and falls back to a public proxy carrying
+none of the caller's credentials. ⛔ Reads only, on both routes.
+
+⚠ **Not in `check-twins.sh`.** Comparing two miners means fetching a live
+third-party repository twice on every run, which would make a local check
+depend on somebody else's uptime, and the output is a directory rather than a
+verdict. ⭐ The pair was proved instead by running both halves and both routes
+against one target: all four runs returned 26 issues, 13 comments, 0 review
+comments, 1 release and 1 tag. That comparison is what caught the `ConvertTo-Json`
+defect described in the `.ps1`, where a one-element array serialised as a bare
+object and every count read as a field count.
+
+### `common/deslop.sh`
+
+Which files in this tree address a reader as an agent.
+
+⭐ **An inventory, not a gate.** It exits 0 whether it finds forty or none,
+exactly as the probe does, because in the repository that ships them their
+presence is correct. Only `--apply` changes anything.
+
+⛔ **`--apply` refuses on a dirty tree, deletes nothing outside the list it
+printed, and never touches history.** Rewriting published history un-publishes
+nothing, because every fork, mirror and archive keeps its copy, and it breaks
+every clone and every open contribution.
+
+⚠ **Whether a file addresses an agent is a reading**, so this matches names and
+the default mode only prints. ⭐ It is anchored on the whole path for a reason:
+an unanchored match on "agent" takes `src/agents/` in a project that builds one,
+which is a deletion of somebody's source code. Both halves were run against
+exactly that fixture, plus a lower-case `docs/agents.md` decoy, and neither
+took either.
+
+[`../docs/methodology/lean-adoption.md`](../docs/methodology/lean-adoption.md)
+is the procedure, and ⭐ the cheaper path is never installing the files at all.
 
 ### `common/git-sync.sh`
 

@@ -45,6 +45,19 @@ jobs:
       - name: probe the runner
         run: sh scripts/doctor/doctor.sh --fast
 
+      # ⭐ Part (a) of the gate, in one command, rather than a list of steps
+      # that drifts from the list in docs/methodology/gate.md.
+      #
+      # ⛔ --strict IS THE CI MODE. A skipped check is not a passed one, and on
+      # a runner the tools are installed on purpose: a SKIP here means the
+      # install broke, not that the machine is modest. On a laptop, drop it.
+      #
+      # ⚠ Delete this step only if the project did not take the checks. Do not
+      # leave it commented out beside a hand-written list of the same checks:
+      # two lists is how one of them stops being maintained.
+      - name: the gate
+        run: sh scripts/common/check-gate.sh --strict
+
       # Ecosystem setup. Uncomment the one that applies.
       # - uses: actions/setup-node@v4
       #   with:

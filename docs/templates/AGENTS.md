@@ -21,7 +21,8 @@ authority. Reading a row in a table here is not reading the rule.
 ## Start here, every session
 
 ⭐ **Read [`{{RECORD}}`]({{RECORD}}) first.** It is the only file that always
-carries what changed since last time: the baseline, what the last session did,
+carries what changed since last time, in the shape
+[`docs/methodology/sessions.md`](docs/methodology/sessions.md) names:
 what is in progress, and the work order. Nothing else carries a work order.
 
 Then run the probe, because a different machine or a moved tool changes what
@@ -46,18 +47,22 @@ front of you and read what it names, in full.
 
 | the task | read, in this order |
 | --- | --- |
-| **Any session, before anything else** | [`{{RECORD}}`]({{RECORD}}) · [`docs/methodology/sessions.md`](docs/methodology/sessions.md) |
-| **Implementing an approved unit of work** | the one unit's plan · the previous handoff · [`docs/methodology/gate.md`](docs/methodology/gate.md) · [`docs/conventions/code.md`](docs/conventions/code.md) · [`docs/conventions/forbidden-patterns.md`](docs/conventions/forbidden-patterns.md) |
-| **Authoring new work from an intake** | [`docs/methodology/authoring.md`](docs/methodology/authoring.md) · [`docs/architecture.md`](docs/architecture.md) · the work template · ⛔ do not implement |
-| **Fixing a defect** | [`docs/methodology/authoring.md`](docs/methodology/authoring.md) · the code the defect is in · [`docs/conventions/forbidden-patterns.md`](docs/conventions/forbidden-patterns.md) |
-| **Resuming an interrupted session** | [`docs/methodology/sessions.md`](docs/methodology/sessions.md) resuming section · the latest handoff · ⛔ the tree and the running system, never the old conversation |
+| **Any session, before anything else** | [`{{RECORD}}`]({{RECORD}}) , [`docs/methodology/sessions.md`](docs/methodology/sessions.md) |
+| **Implementing an approved unit of work** | the one unit's plan , the previous handoff , [`docs/methodology/gate.md`](docs/methodology/gate.md) , [`docs/conventions/code.md`](docs/conventions/code.md) , [`docs/conventions/forbidden-patterns.md`](docs/conventions/forbidden-patterns.md) |
+| **Authoring new work from an intake** | [`docs/methodology/authoring.md`](docs/methodology/authoring.md) , [`docs/architecture.md`](docs/architecture.md) , the work template , ⛔ do not implement |
+| **Fixing a defect** | [`docs/methodology/authoring.md`](docs/methodology/authoring.md) , the code the defect is in , [`docs/conventions/forbidden-patterns.md`](docs/conventions/forbidden-patterns.md) |
+| **Resuming an interrupted session** | [`docs/methodology/sessions.md`](docs/methodology/sessions.md) resuming section , the latest handoff , ⛔ the tree and the running system, never the old conversation |
 | **Touching anything remote** | [`docs/security/remote-ops.md`](docs/security/remote-ops.md) |
 | **Anything involving a credential** | [`docs/security/secrets.md`](docs/security/secrets.md) |
-| **Writing or editing a document** | [`docs/conventions/prose.md`](docs/conventions/prose.md) · [`docs/conventions/docs.md`](docs/conventions/docs.md) |
+| **Writing or editing a document** | [`docs/conventions/prose.md`](docs/conventions/prose.md) , [`docs/conventions/docs.md`](docs/conventions/docs.md) |
 | **Committing** | [`docs/conventions/git.md`](docs/conventions/git.md) |
 | **Anything crossing a shell, or a quoting problem** | [`docs/conventions/shell.md`](docs/conventions/shell.md) |
 | **Studying an external repository** | [`docs/methodology/references.md`](docs/methodology/references.md) |
-| **Closing out a session** | [`docs/methodology/sessions.md`](docs/methodology/sessions.md) · [`docs/methodology/reviews.md`](docs/methodology/reviews.md) |
+| ⭐ **Touching any vendored or third-party source** | [`docs/methodology/vendoring.md`](docs/methodology/vendoring.md) . ⛔ Patch it here, and upstreaming is not a topic |
+| **Taking a measurement** | [`docs/methodology/experiments.md`](docs/methodology/experiments.md) |
+| **Recording something superseded** | [`docs/methodology/history.md`](docs/methodology/history.md) . ⛔ Not into the page it supersedes |
+| ⭐ **Waiting for anything** | [`docs/conventions/shell.md`](docs/conventions/shell.md) section 10 . ⛔ Never end the turn, and never a harness scheduler |
+| **Closing out a session** | [`docs/methodology/sessions.md`](docs/methodology/sessions.md) , [`docs/methodology/reviews.md`](docs/methodology/reviews.md) |
 | {{ADD A ROW PER RECURRING TASK IN THIS PROJECT}} | {{what it reads}} |
 
 ⛔ **Read what the row names in full.** Not grepped, not skimmed, not recalled
@@ -106,7 +111,8 @@ Short enough to state here, and each has been broken before:
 
 ## Reach for the tool that exists
 
-⚠ **A general tool used where a purpose-built one exists produces answers that
+⚠ **Reach for the purpose-built tool first**, for the reason
+[`docs/methodology/authoring.md`](docs/methodology/authoring.md) gives: a general one produces answers that
 are plausible and wrong**, which is the hardest kind to catch.
 
 | you want to | use | not |

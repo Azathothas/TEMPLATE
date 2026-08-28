@@ -121,6 +121,11 @@ rule that was never meant to apply here.
 | `docs/methodology/ingest.md` | kept for an adopt, deleted for a greenfield project |
 | `docs/methodology/work-stages.md` / `work-todo.md` | keep the one the model selects, delete the other, delete `choosing-a-work-model.md` once chosen |
 | `docs/methodology/references.md` | kept when the project will study external code, which is most of them |
+| `docs/methodology/experiments.md` | kept when the project will take its own measurements. ⚠ A different job from the row above, and most projects need both. |
+| `docs/methodology/vendoring.md` | ⭐ kept whenever the project will carry ANY third-party source: a vendored dependency, a fork, a copied script |
+| `docs/methodology/history.md` | ⭐ always kept, and the `docs/history/` directory is created in step 5. Deleting it is what makes the history land in the reference pages instead. |
+| `docs/methodology/template-sync.md` | kept if the project may take a later version of this template |
+| `docs/methodology/lean-adoption.md` | ⛔ deleted for a normal project. Kept only if the operator asked for no agent-facing content, in which case it is the procedure rather than a reference. |
 | `docs/conventions/*` | `prose.md`, `docs.md`, `git.md`, `code.md`, `forbidden-patterns.md` and `shell.md` are all kept |
 | `docs/security/*` | both kept, always |
 | `docs/public/` vs `docs/private/` | keep the one that matches visibility, delete the other |
@@ -182,6 +187,14 @@ project has a use for it:
 | `CHANGELOG.md` | what shipped, when, and where the evidence is |
 | the work-unit template | `stage.md` or `todo-entry.md`, whichever the model chose |
 | `handoff.md` | in stage mode, the durable memory between sessions |
+| ⭐ `docs/history/README.md` | from [`../docs/templates/HISTORY.md`](../docs/templates/HISTORY.md). Create the directory even though it is empty: it is the destination that stops the project's story being written into every reference page, and a destination that does not exist yet is one nobody uses. |
+
+⛔ **The lean case skips most of this table.** If the operator asked for no
+agent-facing content, follow
+[`../docs/methodology/lean-adoption.md`](../docs/methodology/lean-adoption.md)
+instead of writing these files and then removing them. It is a selection made
+now, not a cleanup done later, and the difference is a history full of the
+thing they did not want.
 
 ⛔ **Write nothing into these that you have not verified.** A skeleton is
 allowed to be empty. It is not allowed to contain a claim about the project
@@ -226,7 +239,7 @@ work:
 rm -rf bootstrap
 ```
 
-It is scaffolding for starting a project, and a project that has started does
+[`README.md`](README.md) says why in full: a project that has started does
 not need the instructions for starting. Leaving it costs every future session
 the moment it takes to work out that the directory does not apply.
 
@@ -246,8 +259,7 @@ it. Two things there are absolute and both have been broken before:
   harness asks for.
 - ⛔ **The commit body goes through a file**, never typed into a shell. See
   [`../docs/conventions/shell.md`](../docs/conventions/shell.md) for why: a
-  prose payload passed inline to a shell has had its backticks executed even
-  inside a quoted heredoc.
+  quoted heredoc is not sufficient protection, and the measurement is there.
 
 ---
 

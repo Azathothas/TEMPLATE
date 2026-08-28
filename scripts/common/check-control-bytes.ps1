@@ -13,7 +13,7 @@
 # ⭐ The runtime value is identical either way. Write the escape, not the byte.
 # Because correctness never depends on it, this survives a long time unnoticed.
 #
-# ── THE THREE BLIND SPOTS THIS SCOPE WAS PAID FOR ───────────────────────────
+# -- THE THREE BLIND SPOTS THIS SCOPE WAS PAID FOR ---------------------------
 #
 # 1. ⛔ TRACKED ALONE IS NOT ENOUGH. `git ls-files` cannot see a file that has
 #    never been staged, which is exactly when a new file is most likely to

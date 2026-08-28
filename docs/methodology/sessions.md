@@ -24,7 +24,8 @@ Trust artefacts, verify claims.
 4. **Re-measure the baseline** rather than trusting the recorded one. Run the
    checks and read what they say today.
 5. **Read what the task routes you to**, per the project's own router. Not
-   everything, and not less than the routing table names.
+   everything, and not less than the routing table names. ⭐ Where a file is
+   named as required reading, **read the bytes, end to end**, and see below.
 6. **Restate the plan and its decisions in a few bullets** before touching
    anything. This is not ceremony: it reloads the design into working memory
    and catches a misreading before it becomes a wrong build.
@@ -34,6 +35,78 @@ Trust artefacts, verify claims.
 ```bash
 date -u +%Y-%m-%dT%H:%M:%SZ
 ```
+
+8. ⭐ **Write the resume file, before doing any work.** Below.
+
+---
+
+## ⛔ Required reading is read, and the receipt is how anyone can tell
+
+⚠ **Agents skip it and then agree that they skipped it.** The observed shape is
+consistent: the file is grepped or skimmed, often described as being read "in
+parallel" with doing the work, the session proceeds on what it expected the
+file to say, and when challenged it opens with agreement and re-reads. The
+agreement costs nothing and the wrong work has already been done.
+
+⭐ **The fix is not a stronger instruction. It is a receipt**, because an
+instruction cannot be checked and a receipt can.
+
+**Before acting on required reading, report for each file:** its line count,
+and the heading of its last section.
+
+```bash
+wc -l FILE && grep -c '^#' FILE && grep '^#' FILE | tail -1
+```
+
+⚠ **Both halves matter.** A line count alone is available from a listing. The
+last heading is not: reaching it means reaching the end of the file, which is
+exactly the part a skim drops.
+
+⛔ **A receipt for a file that was not read is a fabricated measurement**, and
+that is a more serious defect than skipping the reading. Say "I did not read
+this" instead. That is a normal thing to report and it costs one line.
+
+⚠ **This applies to a bootstrap, an adoption and any session whose prompt names
+required reading.** It does not apply to routine work: a routine session reads
+what its task routes it to, and the routing table is the contract there.
+
+---
+
+## ⭐ The resume file, written at the START
+
+⛔ **A session that dies does not run its ending.** An agent terminated
+unexpectedly mid-task and there was no session log, no progress file and no
+resume prompt anywhere. The whole session's work was lost and another session
+started it again from nothing.
+
+Everything else in this document is written at the end, which is exactly the
+moment an interrupted session never reaches. So one artefact is written at the
+**start** and refreshed as the session goes.
+
+`RESUME.md`, beside the record, ⛔ **overwritten every session, never
+appended to.** It is a dead man's switch, not a history.
+
+What it carries, and nothing else:
+
+| | |
+| --- | --- |
+| the task | what this session was asked to do, in one or two lines |
+| the resume point | the next thing that has not been done |
+| in flight | what is half-done right now, and which files are open in it |
+| ⚠ the state of the tree | dirty or clean, and which checks were red when this was last written |
+| the paste | a short prompt a fresh session can be given verbatim |
+
+⭐ **Refresh it whenever the answer to "what is in flight" changes**, which is
+usually a few times a session. A refresh is a rewrite of five lines and it
+costs nothing next to losing the session.
+
+⚠ **It is not the record and it is not the work order.** The record holds
+those, is tracked, and is read first anyway. This file exists only so that a
+session that ended badly still hands over something.
+
+⚠ **Whether it is committed is the project's decision.** Committed, it survives
+a machine going away; ignored, it stays out of the history. Either is fine and
+the project's rules say which. ⛔ What is not fine is not having one.
 
 ---
 
@@ -96,6 +169,20 @@ what the last one actually did.
 ## The next prompt
 
 Printed in chat, in a fenced block, ⛔ **never written into a file.**
+
+⚠ **This is not in tension with the resume file above, and the difference is
+worth stating because it looks like one.** They are different artefacts with
+different lifetimes:
+
+| | the next prompt | ⭐ `RESUME.md` |
+| --- | --- | --- |
+| written | at a clean end | at the **start**, refreshed as work moves |
+| carries | the reading list and the framing for the next unit of work | what is in flight right now |
+| lives | in chat | on disk, overwritten each session |
+| exists because | a file copy of the work order goes stale | ⛔ a session that dies never reaches its end |
+
+⛔ **Neither one carries the work order.** That is the record's, which is where
+it is already correct.
 
 **Which prompt depends on one thing: did this session finish what it was
 given?**
@@ -215,10 +302,18 @@ have had capabilities this one lacks, or the reverse.
 
 ## Do not idle
 
-⚠ **Do not end a turn to wait for something.** The conversation idles, the
-harness times out, and the session dies mid-operation with state half-changed.
+⚠ **Do not end a turn to wait for something.**
+[`../conventions/shell.md`](../conventions/shell.md) section 10 says what that
+costs and what to do instead.
 
-Hold in the foreground with a loop that ticks and prints progress, and keep the
-tick short enough that nothing looks hung. A background job and a hold loop are
-not alternatives; use both. See
-[`../conventions/shell.md`](../conventions/shell.md) section 10 for the shape.
+⛔ **And do not substitute the harness's own scheduler, monitor or wake-up tool
+for the wait.** They end the turn by design. A session that finds a foreground
+`sleep` blocked and reaches for a built-in that waits has not found a way to
+follow this rule; it has found a way to break it that reads like compliance.
+
+⭐ **The best hold has no timer in it.** Block on the work: run the job in the
+foreground and let its own output be the tick, or tail its log with the job's
+pid so the hold ends when the work does.
+[`../conventions/shell.md`](../conventions/shell.md) section 10 has the shapes,
+the measured timer alternatives for the case where nothing local can be blocked
+on, and the pipeline trap that hangs a turn while looking correct.

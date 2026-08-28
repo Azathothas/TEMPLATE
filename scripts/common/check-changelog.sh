@@ -13,7 +13,7 @@
 # entries landing mid-file, one section ascending while the rest descended, and
 # headings with no date to order by.
 #
-# ── WHAT IT CHECKS ──────────────────────────────────────────────────────────
+# -- WHAT IT CHECKS ----------------------------------------------------------
 #   1. ⛔ NEWEST FIRST. Dates inside a section descend. This is the rule that
 #      breaks most often, because appending is what an editor does by default.
 #   2. ⛔ Every entry heading carries a date, ISO 8601. Several entries sharing
