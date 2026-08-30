@@ -240,6 +240,70 @@ issue, re-run the full gate, update the handoff.
 
 ---
 
+## ⛔ A wall is a routing problem, not a verdict
+
+⛔ **A constraint closes a ROUTE. It does not close the QUESTION.** Confusing
+the two is the most expensive mistake available in a session, and it looks like
+diligence, which is why forbidding it needs saying rather than implying.
+
+⚠ **This is an incident, not a preference.** A session was told that a runner
+has no IPv6 egress, which is true and is not going to change, and stopped: it
+recorded the liveness of every IPv6-only host as unknowable. The operator's
+answer was that the closed route was one socket, not the question. The project
+that came out of it lists five other routes to the same answer, none of which
+needs IPv6 from the runner: a public translation gateway, a permitted relay,
+correlation with an observer that does have IPv6, evidence from peers, and
+checking whether the host is dual-stack after all. ⭐ Told that in writing, the
+same session ran for about five more hours, finished the work it had called
+impossible, and produced a method that answered several other categories at
+once. ⚠ The hours and the outcome are the operator's account of that session,
+not a measurement taken here.
+
+**So the standard is: before recording anything as not-doable, name at least
+three routes you considered and why each failed.** If you cannot name three,
+you have not looked. A route that costs a dependency, a slower path or a
+second-hand source is still a route: evaluate it, record the trade, and do not
+reject it reflexively.
+
+⛔ **"Blocked" means somebody outside this session must act.** It does not mean
+hard, large, slow, unclear, expensive, or easier if somebody decided something.
+An unclear item is one you make a defensible call on, record with the rejected
+alternatives, and continue.
+
+⚠ **"Unmeasurable" is a statement about what was measured, not permission to
+stop.** It is the honest label on the data. It is never the reason an item
+closes.
+
+⭐ **A technique that unlocks many items at once is worth more than finishing
+any single one, even if you finish none.** Look for the leverage: a method that
+answers a class of questions, an instrument that turns a one-off answer into a
+standing check, a structural change that makes a class of defect
+unrepresentable rather than merely tested for, or a refutation that deletes
+work nobody now has to do. When you find one, say so and let it reorder the
+work.
+
+### ⛔ Do not write a rule that lobotomises the next session
+
+This applies to what you leave behind as much as to what you do.
+
+⚠ **A limit stated as a fact is inherited as a fact.** "This cannot be
+detected", "the polite thing is to identify ourselves", "this is out of scope":
+each reads as settled to a session that was not in the room, and each has been
+wrong. One of those three was wrong in practice for the opposite reason it was
+written: the identifying string it recommended is the one that gets a client
+refused.
+
+⭐ **Write the constraint and the evidence, never the conclusion alone.** "No
+IPv6 egress from this runner, measured on DATE" is a fact the next session can
+route around. "IPv6 liveness cannot be established" is a wall somebody else
+built for them.
+
+⚠ **Pivot rather than halt.** A blocker on one item is not a reason to end a
+session; it is a reason to work a different one and record on the one you left
+what was tried, which routes failed, and what would open it.
+
+---
+
 ## Freezing cleanly
 
 ⭐ **The best resumption is one the previous session set up.** When a session is

@@ -132,15 +132,38 @@ rule that was never meant to apply here.
 | `dotfiles/common/` | always |
 | `dotfiles/<ecosystem>/` | keep what the probe found or the operator named, delete the rest |
 | `dotfiles/github/` | keep if the remote is GitHub and CI was chosen |
-| `LICENSES/` | keep the chosen licence as the project's `LICENSE`, delete the directory |
+| `docs/agent-tooling.md`, `docs/containers.md` | ⭐ kept. They are what stops a session installing something, writing its own, or refusing because a tool is absent. Rewrite the "what this repository ships" table to the scripts this project actually has. |
 | `scripts/doctor/` | always kept. Every later session runs it, and a resuming session on a different machine needs it most. |
-| `scripts/<lang>-<host>/` | keep the dialect the host runs |
+| `scripts/common/` | kept. It is the gate, and a gate that has to fetch a check is red whenever somebody else's host is. |
 | `tools/` | deleted unless something in the plan genuinely needs a compiled helper |
 | `bootstrap/` | ⛔ deleted, last, in step 7 |
 
+### ⛔ The template's own files, which are the ones that get left behind
+
+⚠ **Nothing in the table above names these, and that is how they survived.** An
+adopting project inherited `docs/templates/` complete with its unfilled
+placeholder markers, and inherited `docs/README.md` as if it were a map of that
+project's documents when it is a map of this repository's. Both were reported
+as defects by the project that got them. The placeholder half is now mechanical
+(see step 7); the rest is this table.
+
+| what | rule |
+| --- | --- |
+| ⛔ `docs/templates/` | **deleted in step 7**, after step 5 has written the project's files FROM it. A kept copy is a directory of half-written documents that a later session reads as the project's own. |
+| ⛔ `docs/README.md` | **rewritten, never copied.** It lists this repository's documents, several of which this project has just deleted. Write the project's own map, or delete it and let `AGENTS.md` route. |
+| ⛔ `docs/history/` | deleted, and recreated empty in step 5. This repository's history is not the project's. |
+| ⛔ `MAINTAIN.md`, `ROUTE.md`, `ADOPT.md` | deleted. All three are about picking or changing THIS template, and a session that finds one in a project follows instructions for a job that does not exist here. |
+| ⛔ `README.md` | rewritten from `docs/templates/README.md`. The template's front door describes the template. |
+| ⛔ `AGENTS.md` | replaced entirely, in step 4. |
+| `LICENSES/` | keep the chosen licence as the project's `LICENSE`, delete the directory. `docs/agent-tooling.md` says where the filler lives. |
+| `.github/` | ⚠ this repository's own workflows test THIS repository. Take `dotfiles/github/` instead, which is the set written to be inherited. |
+
 ⚠ **When unsure whether to keep a doc, keep it and say so in the report.** A
 kept file the operator deletes costs one line. A deleted file whose rule the
-project needed costs a defect nobody can trace.
+project needed costs a defect nobody can trace. ⛔ **That does not extend to the
+rows above.** Those are not documents the project might want; they are
+instructions for a job that has finished, and keeping one is how the next
+session ends up following it.
 
 ---
 
@@ -230,18 +253,32 @@ surprise in the middle of the work a shared problem rather than an argument.
 
 ---
 
-## Step 7. Delete the bootstrap
+## Step 7. Delete the bootstrap and the skeletons
 
 Last, after the operator has approved and before the first commit of project
 work:
 
 ```bash
-rm -rf bootstrap
+rm -rf bootstrap docs/templates MAINTAIN.md ROUTE.md ADOPT.md
 ```
 
 [`README.md`](README.md) says why in full: a project that has started does
 not need the instructions for starting. Leaving it costs every future session
 the moment it takes to work out that the directory does not apply.
+
+⭐ **`docs/templates/` goes in the same command, and its going is CHECKED.**
+Step 5 read from it; nothing after step 5 has any use for it.
+
+```bash
+sh scripts/common/check-placeholders.sh
+```
+
+⛔ **That check exempts `docs/templates/` only while `bootstrap/` still
+exists.** With the bootstrap gone, the skeletons are scanned like any other
+file and their unfilled markers fail the check. So a project that keeps them
+finds out at its first gate rather than at the moment somebody reads a document
+that was never filled in. ⚠ Run it in this step, not later: the point is to
+find out now.
 
 If the operator's filled-in `ANSWERS.md` carried context worth keeping, copy it
 into the project's record first, ⛔ **with the secrets section stripped**, and

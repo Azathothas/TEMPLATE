@@ -151,17 +151,14 @@ jobs:
           [ "$failed" = 0 ] || exit 1
           [ "$passed" -gt 0 ] || exit 1
 
-      # ⚠ An INVENTORY, not a gate: it exits 0 whether it finds files or none.
-      # This step asserts it still runs and still SEES them, because a matcher
-      # that quietly stopped matching would report a clean tree to every
-      # project trying to strip the agent layer.
-      - name: the agent-facing inventory still finds what this repository ships
+      # ⭐ THE PAGE JOINER, AGAINST AN ORACLE, OFFLINE. mine-repo's proxy route
+      # joined paginated responses by counting bracket characters over raw text,
+      # so every comment body carrying a markdown link was discarded while the
+      # run printed "ok". A consumer found it, not this pipeline. --selftest is
+      # the reproduction, and it needs no network and no credential.
+      - name: the reference miner joins pages with a real parser
         run: |
-          sh scripts/common/deslop.sh --json > deslop.json
-          cat deslop.json
-          n=$(sed 's/.*"agent_facing":\([0-9]*\).*/\1/' deslop.json)
-          echo "agent-facing files: $n"
-          [ "$n" -gt 10 ] || { echo "the matcher stopped matching"; exit 1; }
+          sh scripts/common/mine-repo.sh --selftest
 
       - name: line endings match .gitattributes
         run: |
@@ -169,38 +166,51 @@ jobs:
           if [ -n "$bad" ]; then echo "$bad"; exit 1; fi
           echo "clean"
 
-      - name: every licence text is intact and fillable
+      # ⚠ THE TEXTS ARE CANONICAL AND THE FILLER LIVES UPSTREAM NOW. What CI can
+      # still hold from here is that none of them was truncated or emptied by an
+      # edit: SPDX texts do not change, so a shrinking one is a corruption.
+      - name: every licence text is present and non-trivial
         run: |
           fail=0
-          for id in MIT Apache-2.0 BSD-2-Clause BSD-3-Clause 0BSD Unlicense CC0-1.0 MPL-2.0; do
-            if sh scripts/common/fill-license.sh --id "$id" --holder "CI Check" --year 2026 --out /tmp/L; then
-              echo "ok   $id"
+          n=0
+          for f in LICENSES/*.txt; do
+            n=$((n + 1))
+            bytes=$(wc -c < "$f")
+            if [ "$bytes" -lt 500 ]; then
+              echo "FAIL $f is $bytes bytes"; fail=1
             else
-              echo "FAIL $id"; fail=1
+              echo "ok   $f  $bytes bytes"
             fi
           done
-          # ⛔ These four MUST refuse. The GPL family's copyright line belongs to
-          # the FSF, and SPDX's ISC text carries Internet Systems Consortium's.
-          # A version that stopped refusing would silently corrupt an attribution.
-          for id in GPL-3.0-only AGPL-3.0-only LGPL-3.0-only ISC; do
-            if sh scripts/common/fill-license.sh --id "$id" --holder "CI Check" --out /tmp/L 2>/dev/null; then
-              echo "FAIL $id was filled in; it must be refused"; fail=1
-            else
-              echo "ok   $id correctly refused"
-            fi
-          done
+          [ "$n" -eq 12 ] || { echo "expected 12 licence texts, found $n"; fail=1; }
           exit $fail
 
+      # ⛔ THIS STEP USED `glob.glob('**/*.yml')` AND NEVER ONCE PARSED A LIVE
+      # WORKFLOW. Python's glob skips a dot-directory unless the pattern names
+      # it, and every workflow here is under .github/. Measured on this tree on
+      # 2026-08-30: glob saw 6 files, all of them the INERT copies under
+      # dotfiles/github/, and missed all 3 under .github/ including the file
+      # running the step. It was green for its whole life over the files that
+      # cannot break the build.
+      #
+      # ⭐ The file list comes from git now. git tracks dot-directories like any
+      # other, and it also refuses to report success over an empty scope.
       - name: yaml parses
         run: |
+          git ls-files '*.yml' '*.yaml' > yamls.txt
+          n=$(wc -l < yamls.txt)
+          echo "$n yaml file(s) in scope"
+          [ "$n" -gt 0 ] || { echo "empty scope: refusing to report success"; exit 1; }
+          grep -q '^\.github/workflows/' yamls.txt || {
+            echo "the live workflows are not in scope; this is the defect that shipped"; exit 1; }
           python3 -c "
-          import sys, glob
+          import sys
           try:
               import yaml
           except ImportError:
               sys.exit('pyyaml missing')
           bad = 0
-          for f in glob.glob('**/*.yml', recursive=True):
+          for f in open('yamls.txt', encoding='utf-8').read().split():
               try:
                   yaml.safe_load(open(f, encoding='utf-8'))
                   print('ok  ', f)
@@ -255,7 +265,7 @@ jobs:
             @{ f = 'check-placeholders.ps1';   a = @() },
             @{ f = 'check-control-bytes.ps1';  a = @() },
             @{ f = 'check-no-secrets.ps1';     a = @('-Public') },
-            @{ f = 'deslop.ps1';               a = @('-Json') }
+            @{ f = 'mine-repo.ps1';            a = @('-SelfTest') }
           )
           foreach ($c in $checks) {
             & pwsh -NoProfile -File ".\scripts\common\$($c.f)" @($c.a)
@@ -270,23 +280,22 @@ jobs:
           else { Write-Output "ok   check-changelog.ps1 (exit $LASTEXITCODE)" }
           exit $fail
 
-      - name: every licence text is intact and fillable, from PowerShell
+      # ⭐ THE TWO HALVES OF THE PAGE JOINER MUST GIVE THE SAME ANSWER, and this
+      # is the one job that runs the PowerShell half on Windows. The sh half is
+      # run in the linux job and check-twins compares them on a machine that has
+      # both; this asserts the answer here, on the host the twin exists for.
+      - name: the reference miner's joiner agrees, from PowerShell
         shell: pwsh
         run: |
-          $fail = 0
-          foreach ($id in 'MIT','Apache-2.0','BSD-2-Clause','BSD-3-Clause','0BSD','Unlicense','CC0-1.0','MPL-2.0') {
-            & pwsh -NoProfile -File .\scripts\common\fill-license.ps1 -Id $id -Holder 'CI Check' -Year 2026 -Out "$env:TEMP\L"
-            if ($LASTEXITCODE -ne 0) { Write-Output "FAIL $id"; $fail = 1 } else { Write-Output "ok   $id" }
+          $out = & pwsh -NoProfile -File .\scripts\common\mine-repo.ps1 -SelfTest -Json
+          $rc = $LASTEXITCODE
+          Write-Output "exit $rc  $out"
+          if ($rc -ne 0) { exit 1 }
+          if ($out -ne '{"schema":"mine-repo-selftest/1","cases":4,"failed":0}') {
+            Write-Output 'the self-test answer changed; the sh half says otherwise'
+            exit 1
           }
-          # ⛔ These four MUST refuse, in this implementation as much as in the
-          # sh one. A twin that stopped refusing would silently corrupt an
-          # attribution on exactly the hosts nobody tests on.
-          foreach ($id in 'GPL-3.0-only','AGPL-3.0-only','LGPL-3.0-only','ISC') {
-            & pwsh -NoProfile -File .\scripts\common\fill-license.ps1 -Id $id -Holder 'CI Check' -Out "$env:TEMP\L" 2>$null
-            if ($LASTEXITCODE -eq 0) { Write-Output "FAIL $id was filled in; it must be refused"; $fail = 1 }
-            else { Write-Output "ok   $id correctly refused" }
-          }
-          exit $fail
+          Write-Output 'ok'
 
       - name: PSScriptAnalyzer
         shell: pwsh

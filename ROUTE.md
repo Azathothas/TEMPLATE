@@ -81,6 +81,9 @@ default.
 
 ## Step 1. Look at the tree. Do not ask yet.
 
+⚠ **This step settles WHERE you are, not WHAT you were asked for.** Both
+matter, and step 2 has a table for each.
+
 ```bash
 git rev-parse --show-toplevel 2>/dev/null || echo "not a git repository"
 ```
@@ -101,17 +104,26 @@ That answers most of it:
 | this template's files **beside** other code | **adopt in place** |
 | a project with its own code, and no file from this template | **adopt from outside** |
 | a project that already has `AGENTS.md` and a record naming this methodology | **routine work**: new work, resume, or rework |
-| `MAINTAIN.md`, `bootstrap/`, `docs/templates/` and no project code | ⛔ **you are inside the template itself**. See the last row of the table in step 2. |
+| `MAINTAIN.md`, `bootstrap/`, `docs/templates/` and no project code | ⛔ **you are inside the template itself**. See the last row of table A in step 2. |
 
 ⚠ **A tree that has a record is never a bootstrap**, whatever the operator's
 message says. Report the contradiction rather than quietly preferring one.
 
 ---
 
-## Step 2. The one question, if the tree did not settle it
+## Step 2. Two tables. The operator's ask decides which.
 
-Ask this, in session, with your reading of the tree attached as the
-recommendation:
+⛔ **Read the operator's message before you ask anything.** Most sessions are
+not lifecycle sessions: somebody wants a measurement taken, another project
+read, a check run, a tool used. Table B routes those, it needs no question, and
+skipping to table A is how a session ends up asking which of eight lifecycle
+jobs an operator meant when they asked for a benchmark.
+
+### Table A. The lifecycle jobs
+
+**These are the ones that change what the repository IS.** Ask only if the
+tree did not settle it, in session, with your reading of the tree attached as
+the recommendation:
 
 > The tree looks like **X**. Which of these is it?
 >
@@ -123,8 +135,6 @@ recommendation:
 > 6. Adopt the template but ship **no** agent-facing content
 > 7. Re-sync a project that adopted this template earlier
 > 8. Change the template itself
-
-Then route:
 
 | | the job | read, in full |
 | --- | --- | --- |
@@ -141,6 +151,33 @@ Then route:
 own.** Row 2 with nothing cloned is `ADOPT.md` and only `ADOPT.md`: it never
 clones this repository and it changes nothing until a findings report has been
 approved.
+
+### ⭐ Table B. The work itself
+
+⛔ **Match on the VERB in the operator's message.** More than one row can apply
+and then both are read: a sweep that also takes measurements owes what both
+rows name.
+
+| the operator wants | read, in full |
+| --- | --- |
+| ⭐ to study another project: clone, mine, survey, investigate, "look at how X does it" | `docs/methodology/references.md`. ⛔ Its four traps are why: the tracker gets skipped, the corpus gets deleted, and the instrument gets left in a transcript. |
+| a measurement, a benchmark, an experiment, "is X faster than Y", "does this actually work" | `docs/methodology/experiments.md`. ⛔ A negative result is committed, and a number carries its conditions or it is not a number. |
+| a review, an audit, "check this over", "what did we miss" | `docs/methodology/reviews.md`. Three lenses, three different questions. One sweep written up three times is one pass. |
+| to know whether the work is done, or to run the gate | `docs/methodology/gate.md`, then `scripts/README.md`. Three parts, none skippable, and an exit code is read unpiped. |
+| a tool for a job, or is about to install one, write one, or say a job cannot be done here | ⛔ `docs/agent-tooling.md` FIRST. Then `docs/methodology/sessions.md` on why a missing tool closes one route and not the question. |
+| something run on a different machine, a different libc, a newer browser, a throwaway environment | `docs/containers.md` |
+| third-party code brought into the tree: a vendored dependency, a fork, a copied script, a patch | `docs/methodology/vendoring.md`. Patch it here; upstreaming is not a topic. |
+| a document written, rewritten, or a rule changed | `docs/conventions/prose.md`, then `docs/conventions/docs.md`. Amend in place; superseded wording goes to the history directory. |
+| code written or changed | `docs/conventions/code.md`, and `docs/conventions/forbidden-patterns.md` to grep yourself against before calling it done |
+| anything touching a shell, a heredoc, quoting, line endings, or an exit code | `docs/conventions/shell.md`. It is the longest file here and the one that has cost the most. |
+| to commit, push, or open something on a remote | `docs/conventions/git.md`, then `docs/security/remote-ops.md` |
+| a credential, a token, a key, or a leak that already happened | `docs/security/secrets.md` |
+| to know where a superseded explanation went, or why a rule has its shape | `docs/methodology/history.md` |
+| a session ended, frozen, handed over, or a record written | `docs/methodology/sessions.md` |
+
+⚠ **A row you cannot match is not a row that does not exist.** Say what the ask
+was, name the closest two rows, and read both. ⛔ Do not invent a procedure
+because the table did not name one.
 
 **Fetch what the row names**, with the fetcher and the scratch directory you
 established at the top of this file. ⚠ Do not copy a `curl`-to-`/tmp` line from
@@ -193,5 +230,8 @@ worse than saying you skipped it.
 - ⚠ **Not a substitute for the file it routes you to.** Reading this row is not
   reading that document.
 - ⚠ **Not a procedure.** It ends the moment you know which job this is.
-- ⛔ **Not permission to start.** Rows 1, 2 and 6 all stop for the operator's
-  approval before anything is written.
+- ⛔ **Not permission to start.** Rows 1, 2 and 6 of table A all stop for the
+  operator's approval before anything is written.
+- ⚠ **Not a list of everything this repository can do.**
+  [`docs/README.md`](docs/README.md) is the full map, and a session whose ask
+  matches no row in either table should read it rather than improvise.

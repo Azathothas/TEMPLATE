@@ -37,6 +37,7 @@ to route one.**
 | `docs/security/secrets.md` | what never enters a tree |
 | `docs/conventions/git.md` | commit rules. Including the one that forbids crediting a tool, which is the rule this project most wants. |
 | `dotfiles/*`, `LICENSES/*` | ignore, attribute, editor, CI, licence texts |
+| `docs/containers.md` | a procedure for measuring in a throwaway machine. Nothing in it addresses a session. |
 | `CONTRIBUTING.md`, `SECURITY.md`, `CHANGELOG.md` | ordinary project documents |
 
 ### Goes.
@@ -45,6 +46,7 @@ to route one.**
 | --- | --- |
 | `AGENTS.md`, and any file of that family under any name | ⛔ the routers. This is the whole point. |
 | `ROUTE.md`, `ADOPT.md`, `MAINTAIN.md`, `bootstrap/` | entry points for an agent session |
+| `docs/agent-tooling.md` | ⚠ the CATALOGUE is worth keeping and the framing is not. It opens by telling a session what to do before it installs something, and its first table is about a session's reflexes. Lift the tool rows into the project's own documentation and drop the rest. |
 | `docs/methodology/*` | read the note below before deleting all of it |
 | `docs/templates/*` | skeletons an agent fills in |
 | the record, the handoff, the work model | a session-shaped way of tracking work. An issue tracker does the same job for people. |
@@ -101,14 +103,18 @@ allowlist in both halves of the check and say what the project's set is.
 
 Possible, and it is a normal thing to want.
 
-```bash
-sh scripts/common/deslop.sh --dry-run
-```
+⭐ **There is a tool for the listing**, `deslop`, and
+[`../agent-tooling.md`](../agent-tooling.md) says where it lives. It reports
+every agent-facing file in the tree and every reference to one, and changes
+nothing until it is told to.
 
-That lists every agent-facing file in the tree and every reference to one, and
-changes nothing. ⭐ Read the list before running anything that acts on it: it
-is a deletion, and a deletion in somebody's repository is the operation with no
-undo.
+⛔ **Read the list before running anything that acts on it.** It is a deletion,
+and a deletion in somebody's repository is the operation with no undo.
+
+⚠ **Whether a file addresses an agent is a reading, so the listing matches
+NAMES.** Anchor any match you write on the whole path: an unanchored match on
+"agent" takes `src/agents/` in a project that builds one, which is a deletion
+of somebody's source code.
 
 Then, in order:
 

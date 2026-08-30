@@ -13,19 +13,17 @@ curl -sSL -o LICENSES/MPL-2.0.txt https://raw.githubusercontent.com/spdx/license
 
 ---
 
-## Use the script, not a text editor
+## ⛔ Use a script, not a text editor
 
-```bash
-sh scripts/common/fill-license.sh --list
-```
+⭐ **The filler lives upstream now**, and
+[`../docs/agent-tooling.md`](../docs/agent-tooling.md) says where. It takes an
+identifier and a holder, reads `git config user.name` when given no holder, and
+⛔ **invents nothing**: with no name configured it refuses rather than guessing,
+and no name is ever baked into this template.
 
-```bash
-sh scripts/common/fill-license.sh --id MIT --holder "Some Name"
-```
-
-With no holder, it reads `git config user.name`. ⛔ **Nothing is invented**: if
-git has no name configured, it refuses rather than guessing, and no name is
-ever baked into this template.
+⚠ **The reason the texts stayed here and the filler did not** is that a
+project must be able to write its `LICENSE` from a canonical text it already
+has. The texts are canonical SPDX and do not change; a script does.
 
 ---
 

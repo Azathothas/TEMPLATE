@@ -51,9 +51,10 @@
 #
 # -- THE EXEMPTIONS ----------------------------------------------------------
 #
-# ⛔ LICENSES/*.txt IS EXEMPT. Canonical SPDX texts, compared byte-for-byte by
-# check-twins.sh, two of which carry typographic quotes and a copyright sign. A
-# check that asked somebody to edit them would be asking for a corruption.
+# ⛔ LICENSES/*.txt IS EXEMPT. Canonical SPDX texts, two of which carry
+# typographic quotes and a copyright sign, and four of which must never have
+# their notice altered because the copyright line is somebody else's. A check
+# that asked anybody to edit them would be asking for a corruption.
 #
 # ⚠ A LEADING BYTE-ORDER MARK IS EXEMPT, and only a leading one. Every .ps1
 # here begins with one. A BOM anywhere else is a real defect and is reported.

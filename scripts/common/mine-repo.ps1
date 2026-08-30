@@ -52,6 +52,7 @@
 #   pwsh -NoProfile -File scripts/common/mine-repo.ps1 OWNER/NAME
 #   pwsh -NoProfile -File scripts/common/mine-repo.ps1 OWNER/NAME -Out references
 #   pwsh -NoProfile -File scripts/common/mine-repo.ps1 OWNER/NAME -Route proxy -NoClone
+#   pwsh -NoProfile -File scripts/common/mine-repo.ps1 -SelfTest   the joiner, offline
 #
 # Exit codes: 0 the subject was fetched, 1 it was not, 2 could not run.
 #
@@ -66,12 +67,13 @@
 # author and committer were the same wrong string.
 [CmdletBinding(PositionalBinding = $false)]
 param(
-    [Parameter(Position = 0, Mandatory = $true)]
-    [string]$Target,
+    [Parameter(Position = 0)]
+    [string]$Target = '',
     [string]$Out = 'references',
     [ValidateSet('auto', 'gh', 'proxy')]
     [string]$Route = 'auto',
     [switch]$NoClone,
+    [switch]$SelfTest,
     [switch]$Json
 )
 
@@ -80,6 +82,193 @@ $ErrorActionPreference = 'Stop'
 
 $proxy = 'https://api.gh.pkgforge.dev'
 $control = 'pkgforge-dev/reverse-proxies'
+
+$gaps = New-Object System.Collections.ArrayList
+function Add-Gap([string]$T) { [void]$gaps.Add('  - ' + $T) }
+function Say([string]$T) { if (-not $Json) { Write-Output $T } }
+
+# ⛔ JOIN PAGES WITH A REAL PARSER. EACH PAGE IS ITS OWN DOCUMENT.
+#
+# The sh twin shipped a joiner that concatenated the pages into one buffer and
+# recovered the array bounds by counting bracket characters over the RAW TEXT,
+# which counts the brackets inside string values too. It was reported by a
+# consumer whose whole comment corpus arrived empty while the run printed "ok".
+# This half never had that defect; it has this function so both halves have one
+# joiner to prove and -SelfTest can drive it.
+function Join-Pages {
+    # ⚠ The attribute has to sit INSIDE the function, above its param block.
+    # Written above `function` it is a parse error, not a suppression.
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns', '',
+        Justification = 'It joins pages, plural. The defect it exists to prevent is a joiner that sees one array where there are several, so a singular name would describe it less accurately than the rule it satisfies.')]
+    param([string]$OutFile, [string]$Label, [string[]]$Pages)
+    $all = New-Object System.Collections.ArrayList
+    foreach ($p in $Pages) {
+        try {
+            $items = @(Get-Content -Raw -LiteralPath $p -Encoding utf8 | ConvertFrom-Json)
+        }
+        catch {
+            Add-Gap ($Label + ': a page did not parse as JSON. Pages are left as ' + $OutFile + '.page.N')
+            return $false
+        }
+        foreach ($i in $items) { [void]$all.Add($i) }
+    }
+    # ⚠ -Depth 100. ConvertTo-Json truncates at depth 2 by default and writes a
+    # type name where the object should be, which is a file that parses, looks
+    # populated, and has lost the nesting a reader came for.
+    #
+    # ⛔ -InputObject, AND NO -AsArray. THIS EXACT FORM, and it took three wrong
+    # ones to find it. Every alternative writes a file that PARSES and is wrong,
+    # so nothing but comparing against the sh twin could catch it. Measured on
+    # pwsh 7 with collections of 0, 1 and 3 items:
+    #
+    #   form                          0 items   1 item        3 items
+    #   pipeline, no -AsArray         nothing   bare OBJECT   array
+    #   pipeline + -AsArray           NOTHING   array         array
+    #   -InputObject + -AsArray       [[]]      [[{...}]]     [[...]]
+    #   ⭐ -InputObject, no -AsArray   []        [{...}]       [...]
+    #
+    # The bare-object row is the expensive one: `jq length` counts an object's
+    # KEYS, so this repository's releases read as 20 and its tags as 5 against
+    # 1 and 1 from the sh twin. The empty rows are the quiet one: a zero-item
+    # fetch wrote a zero-byte file that is not JSON at all.
+    [System.IO.File]::WriteAllText($OutFile,
+        (ConvertTo-Json -InputObject $all.ToArray() -Depth 100))
+
+    # ⛔ THE JOIN READS ITS OWN EFFECT BACK. A writer that returns without
+    # writing is the forbidden-patterns row about a step that succeeds having
+    # done nothing.
+    if (-not (Test-Path -LiteralPath $OutFile -PathType Leaf) -or
+        (Get-Item -LiteralPath $OutFile).Length -eq 0) {
+        Add-Gap ($Label + ': the join wrote no output. Pages are left as ' + $OutFile + '.page.N')
+        return $false
+    }
+    return (Test-JoinNonEmpty -OutFile $OutFile -Label $Label -Pages $Pages)
+}
+
+# ⛔ AN EMPTY JOIN OVER A PAGE THAT HAS RECORDS IN IT IS A FAILURE, NOT AN EMPTY
+# TRACKER. The sh twin's defect was invisible precisely because nothing asked
+# this question: `[]` and "this repository has no comments" are the same bytes,
+# and only the input can tell them apart.
+#
+# ⭐ It is a function of its own so -SelfTest can drive it directly. A guard
+# reachable only through the thing it guards gets proved by accident or not at
+# all.
+function Test-JoinNonEmpty([string]$OutFile, [string]$Label, [string[]]$Pages) {
+    $body = (Get-Content -Raw -LiteralPath $OutFile -Encoding utf8) -replace '\s', ''
+    if ($body -ne '[]') { return $true }
+    foreach ($p in $Pages) {
+        if ((Get-Content -Raw -LiteralPath $p -Encoding utf8) -match '"url"') {
+            Add-Gap ($Label + ': the join produced an empty array from a page that has records in it. Pages are left as ' + $OutFile + '.page.N')
+            return $false
+        }
+    }
+    return $true
+}
+
+# -- -SelfTest: the joiner and its guard, against an oracle, no network -------
+#
+# ⭐ THE INSTRUMENT SHIPS WITH THE SCRIPT, and it is the same four cases the sh
+# twin runs, with the same JSON line, so check-twins.sh can compare the pair
+# without a network.
+#
+# ⚠ IT ASSERTS ON THE JOIN AND THE GUARD ONLY. Paging, the proxy, the routes
+# and the clone are not exercised, and a green self-test says nothing about
+# them.
+function Invoke-SelfTest {
+    $dir = Join-Path ([System.IO.Path]::GetTempPath()) ('mine-repo-selftest-' + [Guid]::NewGuid().ToString('N'))
+    New-Item -ItemType Directory -Force -Path $dir | Out-Null
+    $p1 = Join-Path $dir 'p.page.1'
+    $p2 = Join-Path $dir 'p.page.2'
+    $blank = Join-Path $dir 'blank.page.1'
+    $joined = Join-Path $dir 'joined.json'
+    $empty = Join-Path $dir 'empty.json'
+
+    # ⛔ THE FIXTURE CARRIES THE SHAPE THAT BROKE THE SH TWIN: bracket
+    # characters inside string values, unbalanced, spread over two pages.
+    [System.IO.File]::WriteAllText($p1, @'
+[
+ {"url": "https://example.com/1", "body": "see [the report](https://example.com/r"},
+ {"url": "https://example.com/2", "body": "log: [ERROR] [WARN] two opened, none closed"},
+ {"url": "https://example.com/3", "body": "plain"}
+]
+'@)
+    [System.IO.File]::WriteAllText($p2, @'
+[
+ {"url": "https://example.com/4", "body": "]["}
+]
+'@)
+    [System.IO.File]::WriteAllText($blank, "[]`n")
+
+    # ⚠ SCRIPT SCOPE, EXPLICITLY. A nested function assigning `$cases` creates
+    # its OWN copy and the caller's stays at zero, so every case would pass and
+    # the count would print 0. Under Set-StrictMode the half-written form fails
+    # loudly instead, which is how this was found.
+    $script:stCases = 0
+    $script:stFailed = 0
+    $script:stNote = ''
+    function Test-Case([string]$Name, $Expected, $Actual) {
+        $script:stCases++
+        if ("$Expected" -eq "$Actual") {
+            if (-not $Json) { Write-Output ("  ok    {0} = {1}" -f $Name, $Actual) }
+        }
+        else {
+            $script:stFailed++
+            $script:stNote += ("{0}: expected {1}, got {2}. " -f $Name, $Expected, $Actual)
+            if (-not $Json) { Write-Output ("  FAIL  {0}: expected {1}, got {2}" -f $Name, $Expected, $Actual) }
+        }
+    }
+
+    # 1. every record from every page survives the join
+    if (Join-Pages -OutFile $joined -Label 'selftest' -Pages @($p1, $p2)) {
+        $n = ([regex]::Matches((Get-Content -Raw -LiteralPath $joined -Encoding utf8), '"url"')).Count
+    }
+    else { $n = 'refused' }
+    Test-Case 'records-joined' 4 $n
+
+    # 2. the result is ONE array, not several concatenated
+    $arrays = 0
+    if (Test-Path -LiteralPath $joined -PathType Leaf) {
+        $arrays = ([regex]::Matches((Get-Content -Raw -LiteralPath $joined -Encoding utf8), '(?m)^\[')).Count
+    }
+    Test-Case 'arrays-in-output' 1 $arrays
+
+    # ⛔ 3. THE GUARD REFUSES AN EMPTY JOIN OVER A PAGE THAT HAS RECORDS.
+    [System.IO.File]::WriteAllText($empty, "[]`n")
+    $g = if (Test-JoinNonEmpty -OutFile $empty -Label 'selftest-guard' -Pages @($p1)) { 'accepted' } else { 'refused' }
+    Test-Case 'empty-over-records' 'refused' $g
+
+    # ⚠ 4. AND IT ACCEPTS A GENUINELY EMPTY TRACKER. A guard that refused both
+    # would turn every repository with no comments into a failed fetch.
+    $g = if (Test-JoinNonEmpty -OutFile $empty -Label 'selftest-guard' -Pages @($blank)) { 'accepted' } else { 'refused' }
+    Test-Case 'empty-over-nothing' 'accepted' $g
+
+    Remove-Item -Recurse -Force -LiteralPath $dir -ErrorAction SilentlyContinue
+    $gaps.Clear()
+
+    if ($Json) {
+        Write-Output ('{"schema":"mine-repo-selftest/1","cases":' + $script:stCases + ',"failed":' + $script:stFailed + '}')
+    }
+    elseif ($script:stFailed -eq 0) {
+        Write-Output ("mine-repo -SelfTest: {0} cases, all pass." -f $script:stCases)
+    }
+    else {
+        [Console]::Error.WriteLine("mine-repo -SelfTest: $($script:stCases) cases, $($script:stFailed) FAILED. $($script:stNote)")
+    }
+}
+
+# ⭐ -SelfTest RUNS BEFORE EVERYTHING ELSE. It needs no target, no network and
+# no credential, so requiring any of them would make the one part of this
+# script that can be proved the part hardest to run.
+#
+# ⛔ THE VERDICT IS READ FROM A VARIABLE, NEVER RETURNED. `exit (Invoke-SelfTest)`
+# captures the function's OUTPUT STREAM, so every reported line becomes part of
+# the return value and the run prints nothing at all while exiting 0. That is
+# a check reporting success having shown nothing, and it happened here.
+if ($SelfTest) {
+    Invoke-SelfTest
+    if ($script:stFailed -eq 0) { exit 0 }
+    exit 1
+}
 
 if ($Target -notmatch '^[^/]+/[^/]+$') {
     [Console]::Error.WriteLine('mine-repo: give a target as OWNER/NAME')
@@ -111,10 +300,6 @@ if ($LASTEXITCODE -eq 0) {
     & git check-ignore -v -- $dest 2>$null | ForEach-Object { [Console]::Error.WriteLine($_) }
     exit 2
 }
-
-$gaps = New-Object System.Collections.ArrayList
-function Add-Gap([string]$T) { [void]$gaps.Add('  - ' + $T) }
-function Say([string]$T) { if (-not $Json) { Write-Output $T } }
 
 # -- route selection ---------------------------------------------------------
 function Get-Route {
@@ -168,43 +353,26 @@ function Get-List([string]$Path, [string]$OutFile, [string]$Label) {
     # one; a page exactly per_page long is followed by another request, because
     # "it returned 100" and "there are exactly 100" are indistinguishable
     # without asking.
-    $all = New-Object System.Collections.ArrayList
+    $pages = New-Object System.Collections.ArrayList
     for ($page = 1; $page -le 10; $page++) {
-        $tmp = $OutFile + '.page'
+        $tmp = $OutFile + '.page.' + $page
         $code = Invoke-Proxy ($Path + $sep + 'per_page=100&page=' + $page) $tmp
         if ($code -ne 200) {
             Add-Gap ($Label + ': proxy returned ' + $code + ' on page ' + $page)
             Say ("  " + $Label + ": http " + $code)
+            foreach ($p in $pages) { Remove-Item -LiteralPath $p -ErrorAction SilentlyContinue }
             Remove-Item -LiteralPath $tmp -ErrorAction SilentlyContinue
             return
         }
-        $items = @(Get-Content -Raw -LiteralPath $tmp | ConvertFrom-Json)
-        Remove-Item -LiteralPath $tmp -ErrorAction SilentlyContinue
-        foreach ($i in $items) { [void]$all.Add($i) }
-        if ($items.Count -lt 100) { break }
+        [void]$pages.Add($tmp)
+        $n = ([regex]::Matches((Get-Content -Raw -LiteralPath $tmp -Encoding utf8), '"url"')).Count
+        if ($n -lt 100) { break }
     }
-    # ⚠ -Depth 100. ConvertTo-Json truncates at depth 2 by default and writes a
-    # type name where the object should be, which is a file that parses, looks
-    # populated, and has lost the nesting a reader came for.
-    #
-    # ⛔ -InputObject, AND NO -AsArray. THIS EXACT FORM, and it took three
-    # wrong ones to find it. Every alternative writes a file that PARSES and
-    # is wrong, so nothing but comparing against the sh twin could catch it.
-    # Measured on pwsh 7 with collections of 0, 1 and 3 items:
-    #
-    #   form                          0 items   1 item        3 items
-    #   pipeline, no -AsArray         nothing   bare OBJECT   array
-    #   pipeline + -AsArray           NOTHING   array         array
-    #   -InputObject + -AsArray       [[]]      [[{...}]]     [[...]]
-    #   ⭐ -InputObject, no -AsArray   []        [{...}]       [...]
-    #
-    # The bare-object row is the expensive one: `jq length` counts an object's
-    # KEYS, so this repository's releases read as 20 and its tags as 5 against
-    # 1 and 1 from the sh twin, and anything iterating the file would have
-    # walked field names instead of records. The empty rows are the quiet one:
-    # a zero-item fetch wrote a zero-byte file that is not JSON at all.
-    [System.IO.File]::WriteAllText($OutFile,
-        (ConvertTo-Json -InputObject $all.ToArray() -Depth 100))
+    if (-not (Join-Pages -OutFile $OutFile -Label $Label -Pages $pages.ToArray())) {
+        Say ("  " + $Label + ": JOIN FAILED")
+        return
+    }
+    foreach ($p in $pages) { Remove-Item -LiteralPath $p -ErrorAction SilentlyContinue }
     Say ("  " + $Label + ": ok")
 }
 

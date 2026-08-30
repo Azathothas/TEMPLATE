@@ -7,26 +7,26 @@
 # noticed had fallen behind. The failure is silent, because each one works fine
 # on its own host and nobody runs both.
 #
-# -- ⭐ WHY ONLY THE PROBE HAS A TWIN, AND WHY THAT IS NOT AN OVERSIGHT -------
+# -- ⭐ EVERYTHING IN common/ HAS A TWIN, AND THIS FILE COVERS ALL OF THEM ----
 #
-# Every other check here is POSIX sh alone, deliberately. Two implementations
-# of one rule is two places for that rule to be wrong, so a twin has to earn
-# itself. The probe earns it and nothing else does:
+# ⛔ A POSIX sh check cannot be assumed to run on Windows. Measured on one
+# Windows 11 machine on 2026-08-25, from a native PowerShell session with Git
+# Bash off PATH: `sed` was not installed at all, and `sort` resolved to
+# PowerShell's own `Sort-Object` alias, which accepts `-u`, compares
+# case-insensitively, and over the five values `b A a B a` returned `A b`
+# where coreutils returns `A B a b`. ⚠ A missing tool fails loudly; an ALIASED
+# one succeeds and answers differently.
 #
-#   scripts/doctor/  RUNS BEFORE YOU KNOW WHAT IS INSTALLED. That is its whole
-#                    job. It cannot require a POSIX layer, because "is there a
-#                    POSIX layer" is one of the questions it answers. So it
-#                    needs a native implementation per host family.
+# ⛔ So the rule is: wherever a twin exists, THIS CHECK covers it. Adding a
+# twin without adding it here is how drift starts.
 #
-#   everything else  runs AFTER the probe has reported. By then sh is known to
-#                    be present or known to be absent, and on Windows that means
-#                    Git Bash, WSL or msys, all of which the probe reports. A
-#                    second implementation would add a drift surface and buy
-#                    nothing.
-#
-# ⛔ So the rule is: a twin exists only where a single implementation cannot
-# run, and wherever a twin exists, THIS CHECK covers it. Adding a twin without
-# adding it here is how drift starts.
+# ⚠ THIS HEADER USED TO SAY THE OPPOSITE, that only the probe needed a twin.
+# It did not go stale: it shipped in the SAME COMMIT as the section 7 below
+# that says the current rule, and it survived a later maintenance pass over
+# this very file. So the file whose job is stopping two implementations
+# drifting spent its whole life telling its next maintainer not to write the
+# second one, with the correction two hundred lines further down. The retired
+# wording is in docs/history/twins-and-scripts.md.
 #
 # -- WHAT DIFFERENCE IS CORRECT ----------------------------------------------
 #
@@ -259,10 +259,10 @@ compare_pair() {
   # repository's oldest stated rule and it was broken here, in the file whose
   # job is comparing guards, while writing this very function.
   #
-  # ⚠ ONLY THE MACHINE-READABLE LINE IS COMPARED. git-sync --check also prints
-  # timestamped progress, and two runs a second apart are never byte-identical,
-  # which reported a disagreement on a pair that agreed exactly. Comparing the
-  # JSON compares the ANSWER; comparing the transcript compares the clock.
+  # ⚠ ONLY THE MACHINE-READABLE LINE IS COMPARED. A pair that also printed
+  # timestamped progress reported a disagreement while agreeing exactly, because
+  # two runs a second apart are never byte-identical. Comparing the JSON
+  # compares the ANSWER; comparing the transcript compares the clock.
   _a_raw=$( cd "$REPO_ROOT" && sh "$REPO_ROOT/scripts/common/$_p_sh" $_p_shargs 2>/dev/null ); ra=$?
   # shellcheck disable=SC2086
   _b_raw=$( cd "$REPO_ROOT" && "$PWSH" -NoProfile -File "$REPO_ROOT/scripts/common/$_p_ps" $_p_psargs 2>/dev/null ); rb=$?
@@ -296,43 +296,24 @@ compare_pair "check-changelog"      check-changelog.sh      "--json"          ch
 compare_pair "check-no-secrets"     check-no-secrets.sh     "--json"          check-no-secrets.ps1     "-Json"
 compare_pair "check-no-secrets pub" check-no-secrets.sh     "--public --json" check-no-secrets.ps1     "-Public -Json"
 
-# ⚠ git-sync is compared through its READ-ONLY half only. -Check reports on
-# HEAD and changes nothing; running the writing half here would commit.
-compare_pair "git-sync --check"     git-sync.sh             "--check --json"  git-sync.ps1             "-Check -Json"
+# ⭐ mine-repo IS COMPARED THROUGH --selftest, AND THAT IS THE WHOLE POINT.
+# This pair used to be excluded, on the reasoning that comparing two miners
+# means fetching a live third-party repository twice on every run. That
+# reasoning still holds for a FETCH and it never applied to the JOIN, which is
+# the part that was wrong: the sh half joined paginated pages by counting
+# bracket characters over raw text, dropped every comment body containing a
+# markdown link, and printed "ok". A consumer found it, not this check.
+#
+# ⚠ --selftest touches no network and no credential. There was never a reason
+# to leave the joiner uncompared, and the exclusion note that covered the fetch
+# had been read as covering the whole script.
+compare_pair "mine-repo --selftest" mine-repo.sh            "--selftest --json" mine-repo.ps1          "-SelfTest -Json"
 
 # ⚠ THIS PAIR NEEDS THE NETWORK AND AN AUTHENTICATED gh, and both twins exit 2
 # when they do not have them. Two 2s is agreement: it says the pair could not
 # run, not that it passed. ⛔ Do not drop the row on a machine with no gh; a
 # comparison skipped for convenience is a comparison that stops happening.
 compare_pair "check-remote-items"   check-remote-items.sh   "--json"          check-remote-items.ps1   "-Json"
-
-# ⭐ fill-license is compared on its OUTPUT, not on a status line, because its
-# output IS the artefact and a corrupted licence exits 0. The over-replacement
-# that bit this repository produced a valid-looking file.
-printf '\n  licence texts, byte-for-byte:\n'
-LIC_DIFFS=0
-for id in MIT Apache-2.0 BSD-2-Clause BSD-3-Clause 0BSD Unlicense CC0-1.0 MPL-2.0; do
-  ( cd "$REPO_ROOT" && sh scripts/common/fill-license.sh --id "$id" --holder "Twin Check" --year 2026 --out "$TMP/lic.sh.$id" >/dev/null 2>&1 )
-  ( cd "$REPO_ROOT" && "$PWSH" -NoProfile -File scripts/common/fill-license.ps1 -Id "$id" -Holder "Twin Check" -Year 2026 -Out "$TMP/lic.ps.$id" >/dev/null 2>&1 )
-  if cmp -s "$TMP/lic.sh.$id" "$TMP/lic.ps.$id"; then :; else
-    note "fill-license $id: the two implementations wrote different bytes"
-    LIC_DIFFS=$((LIC_DIFFS + 1))
-  fi
-done
-[ "$LIC_DIFFS" = "0" ] && ok "all 8 fillable licences byte-identical"
-
-# ⛔ And the four refusals, in both. A version that stopped refusing would
-# silently corrupt an attribution, and exit 0 while doing it.
-REF_BAD=0
-for id in GPL-3.0-only AGPL-3.0-only LGPL-3.0-only ISC; do
-  ( cd "$REPO_ROOT" && sh scripts/common/fill-license.sh --id "$id" --holder "Twin Check" --out "$TMP/r.sh" >/dev/null 2>&1 ); ra=$?
-  ( cd "$REPO_ROOT" && "$PWSH" -NoProfile -File scripts/common/fill-license.ps1 -Id "$id" -Holder "Twin Check" -Out "$TMP/r.ps" >/dev/null 2>&1 ); rb=$?
-  if [ "$ra" = "1" ] && [ "$rb" = "1" ]; then :; else
-    note "fill-license $id: not refused by both (sh=$ra ps=$rb)"
-    REF_BAD=$((REF_BAD + 1))
-  fi
-done
-[ "$REF_BAD" = "0" ] && ok "all 4 refusals hold in both implementations"
 
 # --- 8. per-tool verdicts, on request ----------------------------------------
 if [ "$VERBOSE" = "1" ]; then

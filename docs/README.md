@@ -44,12 +44,25 @@ rule: these summaries exist to route, not to substitute.
 is, [`ADOPT.md`](../ADOPT.md) for an existing repository elsewhere, and
 [`MAINTAIN.md`](../MAINTAIN.md) for improving the template itself.
 
+## tooling: what to reach for, before you install or invent one
+
+| file | answers |
+| --- | --- |
+| ⭐ [`agent-tooling.md`](agent-tooling.md) | what tool does what job, and where each one lives. ⛔ Read it before installing anything, writing your own, or deciding a job cannot be done here. |
+| [`containers.md`](containers.md) | measuring something this machine cannot measure, in a machine you throw away afterwards. |
+
 ## security
 
 | file | answers |
 | --- | --- |
 | [`secrets.md`](security/secrets.md) | what never enters the tree, and what to do when something did. |
 | [`remote-ops.md`](security/remote-ops.md) | the three tiers governing action on anything outside this machine. |
+
+## history: this repository's own superseded wording
+
+| file | answers |
+| --- | --- |
+| [`history/README.md`](history/README.md) | what was believed here and why that changed, plus the claims this repository has withdrawn. ⛔ A bootstrap deletes it and creates the project's own. |
 
 ## visibility: one of these is kept, the other deleted
 
@@ -63,6 +76,12 @@ is, [`ADOPT.md`](../ADOPT.md) for an existing repository elsewhere, and
 Everything in [`templates/`](templates/) carries double-brace placeholder
 markers and guidance comments. ⛔ **Both are removed when a file is filled in**,
 and `scripts/common/check-placeholders.sh` is what proves it.
+
+⛔ **The directory itself is deleted at the end of a bootstrap**, in the same
+command as `bootstrap/`. A project that kept it inherited a set of half-written
+documents that its next sessions read as the project's own, and the check above
+could not see them because its exemption came across with the directory. It is
+scanned now the moment `bootstrap/` is gone.
 
 ⚠ This paragraph describes the marker rather than showing one, on purpose. A
 document that demonstrates the thing a checker looks for makes the checker fire

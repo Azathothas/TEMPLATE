@@ -114,8 +114,11 @@ every later session and a routine task is not.
 | [`docs/public/`](docs/public/) | rules that apply only when the repository is or will be public | the operator says public |
 | [`docs/private/`](docs/private/) | rules that apply only when it stays private | the operator says private |
 | [`docs/templates/`](docs/templates/) | fill-in skeletons the new project receives | the bootstrap writes from these |
+| ⭐ [`docs/agent-tooling.md`](docs/agent-tooling.md) | what tool does what job, and where each lives | ⛔ **before installing anything, writing your own, or deciding a job cannot be done** |
+| [`docs/containers.md`](docs/containers.md) | measuring in a machine you throw away afterwards | the job needs a machine this one is not |
+| [`docs/history/`](docs/history/) | this repository's own superseded wording | a rule reads as if it contradicts another one |
 | [`dotfiles/`](dotfiles/) | ignore, attribute, editor and CI files, by ecosystem | the probe reports which ecosystems apply |
-| [`LICENSES/`](LICENSES/) | licence texts, with the placeholders a script fills | the operator picks one |
+| [`LICENSES/`](LICENSES/) | canonical licence texts | the operator picks one |
 | [`scripts/`](scripts/) | the probe, and the guards a project inherits | always the probe, the rest by selection |
 | [`tools/`](tools/) | helpers that genuinely need compiling | read its README before adding anything |
 
@@ -139,7 +142,7 @@ the topic. Reading the row is not reading the rule.
 | ⭐ Third-party code in this tree | [`docs/methodology/vendoring.md`](docs/methodology/vendoring.md) |
 | Where a superseded explanation goes | [`docs/methodology/history.md`](docs/methodology/history.md) |
 
-Six are stated here in full, because they are absolute and because each has
+Seven are stated here in full, because they are absolute and because each has
 been broken before:
 
 1. ⛔ **No tool is credited in a commit.** No co-author trailer naming a model,
@@ -162,6 +165,13 @@ been broken before:
    design. [`docs/conventions/shell.md`](docs/conventions/shell.md) section 10
    has the shapes that hold without one, and ⭐ the best of them uses no timer
    at all.
+7. ⛔ **A constraint closes a route, not the question.** Name three routes you
+   considered before recording anything as not-doable, and never write a limit
+   as a settled fact for the next session to inherit.
+   [`docs/agent-tooling.md`](docs/agent-tooling.md) is what to reach for before
+   installing something, writing your own, or refusing because a tool is
+   absent; [`docs/methodology/sessions.md`](docs/methodology/sessions.md) is the
+   rule and what it cost.
 
 ---
 

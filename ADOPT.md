@@ -280,7 +280,9 @@ different answer, which is the worse of the two.
 | `docs/methodology/reviews.md` | the three review lenses |
 | `docs/methodology/sessions.md` | what a session owes, and how one is resumed |
 | `docs/methodology/ingest.md` | the long form of this file, for the deeper pass |
-| `docs/templates/AGENTS.md` | the router, if the project has none |
+| ⭐ `docs/agent-tooling.md` | what tool does what job, and where each lives. Fetch it early: it is what stops a session installing something on somebody else's machine. |
+| `docs/containers.md` | only if the work needs a machine this host is not |
+| `docs/templates/AGENTS.md` | the router, if the project has none. ⛔ It is a SKELETON: every double-brace marker and every guidance comment comes out when it is filled in, and `check-placeholders` is what proves it. A project that kept them has a router that says nothing, and one adopter shipped exactly that. |
 
 **Ecosystem files**, one per ecosystem the probe reported:
 

@@ -44,7 +44,34 @@ $root = ($root | Select-Object -First 1).Trim()
 # a check that fails on a correct tree gets switched off within a week.
 # ⛔ BOTH implementations of this check are exempt, because each one contains
 # the patterns it looks for. Exempting only one is how the twins disagree.
-$exempt = '^(docs/templates/|dotfiles/|bootstrap/|scripts/common/check-placeholders\.(sh|ps1))'
+#
+# -- ⛔ AND THE TEMPLATE EXEMPTION IS CONDITIONAL. HERE IS WHY -------------
+#
+# A directory-shaped exemption inherited by a project grants itself to whatever
+# lands in that directory. A project built from this template copied
+# docs/templates/ across whole, with every double-brace marker unfilled, and
+# this check reported the tree clean for as long as that was true, because the
+# exemption came with the directory. Its own maintainer filed it as a defect.
+#
+# ⭐ REPRODUCED ON 2026-08-30 on a fixture that is that project's tree, and
+# both halves answered identically: two categories, exit 1, where the
+# unconditional version reported one file scanned and exit 0.
+#
+# ⭐ SO THE EXEMPTION LASTS EXACTLY AS LONG AS bootstrap/ DOES. During a
+# bootstrap the skeletons are being read from and must not fail; step 7 of
+# bootstrap/BOOTSTRAP.md deletes both in one command; and afterwards the
+# skeletons are scanned like any other file.
+#
+# ⚠ bootstrap/BOOTSTRAP.md is the marker rather than the directory, because an
+# empty bootstrap/ is not tracked by git and a stray one is not evidence.
+# ⛔ Keep this identical to the sh twin.
+$templatesExempt = Test-Path -LiteralPath (Join-Path $root 'bootstrap/BOOTSTRAP.md') -PathType Leaf
+if ($templatesExempt) {
+    $exempt = '^(docs/templates/|dotfiles/|bootstrap/|scripts/common/check-placeholders\.(sh|ps1))'
+}
+else {
+    $exempt = '^(dotfiles/|scripts/common/check-placeholders\.(sh|ps1))'
+}
 
 Push-Location $root
 try {
@@ -128,7 +155,17 @@ foreach ($rel in $files) {
         }
 
         # 2. A template guidance comment, addressed to whoever was filling it in.
-        if ($line -match '<!-- *TEMPLATE' -or $line -match 'delete this comment' -or $line -match 'Fill every') {
+        # ⛔ `-cmatch`, NOT `-match`, ON ALL THREE. This is the same trap as the
+        #    brace rule above and it had gone unnoticed here because nothing in
+        #    the tree exercised it. The sh twin uses a case-SENSITIVE grep, so
+        #    for as long as no file said "fill every" in lower case the two
+        #    halves agreed by accident. The day a sentence of ordinary prose
+        #    said it, this half reported a defect the sh half did not, and
+        #    check-twins refused the pair. ⚠ Case-sensitive is the CORRECT
+        #    behaviour, not merely the matching one: these three strings are
+        #    the literal text the skeletons carry, and a case-insensitive rule
+        #    fires on prose that happens to use the same words.
+        if ($line -cmatch '<!-- *TEMPLATE' -or $line -cmatch 'delete this comment' -or $line -cmatch 'Fill every') {
             [void]$guideHits.Add("${rel}:${n}:$line")
         }
 
@@ -171,8 +208,21 @@ if ($categories -gt 0) {
     Write-Output 'Fill it in, or delete the section it is in. ⚠ Do not delete the'
     Write-Output 'placeholder alone and leave the sentence around it: that produces a'
     Write-Output 'claim nobody wrote.'
+    if (-not $templatesExempt -and (Test-Path -LiteralPath (Join-Path $root 'docs/templates') -PathType Container)) {
+        Write-Output ''
+        Write-Output '⛔ docs/templates/ IS IN SCOPE HERE, because bootstrap/ has gone.'
+        Write-Output "Those are the template's own skeletons and this project kept them."
+        Write-Output 'Delete the directory: step 5 of the bootstrap is what reads from it'
+        Write-Output 'and nothing after step 5 has a use for it.'
+    }
     exit 1
 }
 
-Write-Output ("no placeholders survived in {0} files (docs/templates, dotfiles and bootstrap are exempt)" -f $files.Count)
+$exemptNote = if ($templatesExempt) {
+    'docs/templates, dotfiles and bootstrap are exempt'
+}
+else {
+    'dotfiles is exempt; docs/templates is IN SCOPE because bootstrap/ has gone'
+}
+Write-Output ("no placeholders survived in {0} files ({1})" -f $files.Count, $exemptNote)
 exit 0

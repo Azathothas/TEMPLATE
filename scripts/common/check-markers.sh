@@ -74,10 +74,10 @@
 # -- THE TWO EXEMPTIONS, EACH FOR A REASON THAT WOULD OTHERWISE BREAK ---------
 #
 # ⛔ LICENSES/*.txt IS EXEMPT. Those are canonical SPDX texts. GPL-3.0 and
-# LGPL-3.0 carry typographic quotes and a copyright sign, they are compared
-# byte-for-byte by check-twins.sh, and fill-license.sh refuses four of them
-# precisely because their notices must not be altered. A check that asked
-# somebody to edit them would be asking for a corruption.
+# LGPL-3.0 carry typographic quotes and a copyright sign, and four of the
+# twelve must never have their notice altered at all because the copyright line
+# is somebody else's. LICENSES/README.md says which four and why. A check that
+# asked anybody to edit these would be asking for a corruption.
 #
 # ⚠ A LEADING BYTE-ORDER MARK IS EXEMPT, and only a leading one. Every .ps1
 # here begins with one and PowerShell on Windows wants it there. A BOM anywhere

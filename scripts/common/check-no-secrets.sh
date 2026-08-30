@@ -125,10 +125,14 @@ if [ "$PUBLIC" = "1" ]; then
   # correct hardening is a rule somebody disables, so the `uses:` form is
   # excluded by shape rather than the whole hex rule being dropped.
   #
-  # ⚠ A DECLARED PIN is the second such shape. It arrived when
-  # scripts/powershell-windows/wsl-ephemeral.ps1 became a wrapper that fetches a
-  # commit and verifies a SHA-256 before executing it: 40 hex and 64 hex, both
-  # public by construction, both the SAFE practice.
+  # ⚠ A DECLARED PIN is the second such shape: a commit and a SHA-256 written
+  # into a script that fetches and verifies code before executing it, so 40 hex
+  # and 64 hex, both public by construction, both the SAFE practice.
+  # ⚠ THE WRAPPER THAT FIRST PRODUCED THIS SHAPE HAS LEFT THIS TREE, and the
+  # exclusion stays because docs/containers.md still tells a project to write
+  # one. It is an exclusion for a shape this template TEACHES, not for a file
+  # it ships, which is the distinction that keeps it from being a dead
+  # exemption granting itself to whatever lands there next.
   # ⛔ Excluded by NAME, narrowly. The hex has to be assigned to an identifier
   # that says it is a pin, because a credential is not assigned to something
   # called PinnedSha256. Widening this to all hex would remove the rule.

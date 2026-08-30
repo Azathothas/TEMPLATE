@@ -101,6 +101,7 @@ judgement about somebody else's prose.
 | replace the record, the work order, or any entry | those are the project's state, not the template's content |
 | append to `.gitignore` or `.gitattributes` without showing the diff | they carry project-specific rules somebody worked out |
 | take a document the project deliberately deleted at bootstrap | absence is a decision here. Check the project's rules before restoring anything. |
+| ⛔ delete a script because the template no longer ships it | a removal upstream is not an instruction. The template dropped four helpers because they are maintained in one place now; a project that HAS them keeps working, and the only thing to take is the knowledge of where the maintained copy lives. ⚠ What is worth doing is comparing: if the upstream copy has fixed something yours has not, that is an entry, not a sync. |
 | ⛔ rewrite history, or force-push | never, for this or anything else |
 | add attribution | above |
 

@@ -16,14 +16,30 @@ pwsh -NoProfile -File scripts/common/check-gate.ps1 -Fast
 | directory | what is in it |
 | --- | --- |
 | [`doctor/`](doctor/) | ⭐ the environment probe. Two implementations, one schema. Every project keeps this. |
-| [`common/`](common/) | the checks and the helpers. ⛔ Every CHECK has a POSIX sh implementation AND a PowerShell twin. |
-| [`powershell-windows/`](powershell-windows/) | tools for a job that only exists on Windows. ⛔ Not a twin of anything. |
+| [`common/`](common/) | the checks, and the one helper. ⛔ Every one has a POSIX sh implementation AND a PowerShell twin. |
 
-⚠ **`powershell-windows/` exists because a job in it has no POSIX form, not
-because a script was easier to write in PowerShell.** The distinction is the
-whole point of the directory. `bash-posix/` does not exist and shipping it
-empty would be shipping a phantom: git does not track an empty directory, so a
-fresh clone would not have what this table described.
+⛔ **What is here is what a project must be able to run with NO NETWORK.** That
+is the whole selection rule, and it is why every check is here and the writing
+helpers are not: a gate that has to fetch a check is red whenever somebody
+else's host is, and a check fetched at gate time is code nobody reviewed
+judging the tree it is judging.
+
+⚠ **Everything that failed that test now lives in
+[`Azathothas/ToolKit`](https://github.com/Azathothas/ToolKit)**, catalogued in
+[`../docs/agent-tooling.md`](../docs/agent-tooling.md) with a link each.
+⭐ **The reason is one sentence: a tool kept in two repositories acquires two
+sets of defects, and one of the two never gets fixed.** Two of the four that
+left were carrying a defect upstream had already fixed, and one of those two
+could have put a fabricated author on a commit.
+[`../docs/history/twins-and-scripts.md`](../docs/history/twins-and-scripts.md)
+carries the comparison and names the two that had not drifted.
+
+⚠ **`powershell-windows/` used to be here** for a job with no POSIX form. Its
+one file was a wrapper around a tool that lives upstream, and the wrapper went
+with the tool. ⛔ The directory is gone rather than kept empty: git does not
+track an empty directory, so a fresh clone would not have had what this table
+described. [`../docs/containers.md`](../docs/containers.md) is the procedure
+that replaced it.
 
 ---
 
@@ -67,8 +83,8 @@ shell would add a second reason; this one did not have it.
 
 That is not advice, it is the rule that keeps two implementations from becoming
 two behaviours. [`common/check-twins.sh`](common/) runs BOTH halves of every
-pair on one tree and compares the `--json` answer and the exit code, then
-compares `fill-license` on its OUTPUT because a corrupted licence exits 0.
+pair on one tree and compares the `--json` answer and the exit code, both read
+from the process that produced them.
 
 ⚠ **It compares ANSWERS on the tree it is run against, not the rules.** A scope
 difference with nothing in the tree to exercise it is invisible: dropping `.py`
@@ -80,15 +96,22 @@ with a fixture, not by trusting the comparison to notice.
 
 | | |
 | --- | --- |
-| [`common/write-file.mjs`](common/) | ⛔ **It does not need one.** It is node, and node is the same program on every host: no `sed`, no `sort`, no shell built-ins, no aliases. The reason the sh checks needed twins does not apply to it. ⚠ What it needs instead is node itself, which is the one dependency anything under `scripts/` has, and the reason a project may decline this helper rather than inherit it. |
 | [`common/check-twins.sh`](common/) | ⛔ **It cannot have one.** It works by running both halves of every pair, so it needs a POSIX shell to run the sh half no matter what language it is written in. A PowerShell twin would still require `sh`, which is the exact dependency a twin exists to remove. It is a maintainer's tool and it runs where both implementations do: this machine, and the CI job that has `pwsh` on an Ubuntu runner. |
-| [`powershell-windows/wsl-ephemeral.ps1`](powershell-windows/) | ⛔ **No twin, and it must not get one.** It drives `wsl.exe`, which is a Windows feature. The POSIX "equivalent" would be a container or `systemd-nspawn`: a different tool solving a different problem, sharing no interface and no output. Calling those two a twin would put `check-twins.sh` in the position of comparing two unrelated programs, and the only way to make that pass is to compare nothing. |
 | [`common/check-gate`](common/) | ⭐ **Has both halves, and is deliberately NOT compared.** It invokes `check-twins`, so putting the pair in `check-twins`'s own list would recurse. ⚠ The two exclusions are a shared contract: dropping either reintroduces a hang that once left twenty stray shells open. |
-| [`common/mine-repo`](common/) | ⭐ **Has both halves, and is deliberately NOT compared.** A comparison would fetch a live third-party repository twice per run, making a local check depend on somebody else's uptime, and it writes a directory rather than a verdict. Proved by running both halves against one target instead, which is stronger evidence and caught a real defect. |
+| [`common/mine-repo`](common/) | ⚠ **Its FETCH is not compared; its JOINER is.** A fetch comparison would pull a live third-party repository twice per run and make a local check depend on somebody else's uptime. ⛔ **That reasoning was read as covering the whole script and it never covered the join**, which is the part that was wrong. `--selftest` compares the join and its guard against a built-in fixture with no network, and that pair IS in `check-twins.sh`. |
 
 ⭐ **The question to ask is whether the JOB exists on the other platform, not
-whether the language does.** `wsl-ephemeral` fails that test. Every check in
-`common/` passes it, which is why every one of them has two halves.
+whether the language does.** Every check in `common/` passes that test, which
+is why every one of them has two halves.
+
+⛔ **And ask it again about every EXCLUSION, which is what this repository got
+wrong.** An exclusion is written for a reason that covers part of a script, and
+then it is read as covering the script. `mine-repo`'s exclusion was correct
+about the fetch and silently protected a joiner that discarded an entire
+comment corpus while printing "ok". A consumer found it, not this file.
+
+---
+
 ## The check contract
 
 ⛔ **Every check in this repository, and every check a project inherits from it,
@@ -313,40 +336,17 @@ to check, and nothing checked them.
 neither broken these rules nor satisfied them, and reporting green over an
 absent file is how a check quietly stops applying.
 
-### `common/fill-license.sh`
-
-Write `LICENSE` from a canonical text with the holder filled in.
-
-⛔ It **refuses** four of the twelve licences, on purpose. The GPL family's
-copyright line belongs to the Free Software Foundation, and SPDX's ISC text
-carries Internet Systems Consortium's own copyright.
-[`../LICENSES/README.md`](../LICENSES/README.md) has the full reasoning.
-
----
-
-## The helpers, which are not checks
+## The one helper, which is not a check
 
 ⚠ **A helper writes; a check reports.** The five-point contract above is for
-checks. These three are held to the header rule and the exit-code rule, and
-deliberately not to "read only": writing is what they are for.
+checks. This one is held to the header rule and the exit-code rule, and
+deliberately not to "read only": writing is what it is for.
 
-### `common/write-file.mjs`
-
-Write, append to, or patch a file without the shell touching the payload.
-
-⭐ **The payload channel is base64**, which is the one encoding no shell
-interprets: not bash, not PowerShell, not `cmd`. A quote, a backtick, a dollar
-sign, a percent and an emoji all survive it unchanged.
-
-⛔ **A substitution whose match count differs from the number you declared is
-REFUSED and the file is left untouched.** A silent no-op reporting success is
-the failure this exists to remove. It fired twice while this template was
-being maintained, once on a CRLF file whose LF search string matched nothing.
-
-⚠ It needs `node`. That is the only thing under `scripts/` that does, and it
-is the reason this is a helper a project may decline rather than a check every
-project inherits. [`../docs/conventions/shell.md`](../docs/conventions/shell.md)
-section 1 is the reasoning, measured.
+⚠ **There used to be four more**, and
+[`../docs/agent-tooling.md`](../docs/agent-tooling.md) says where each went.
+⭐ `mine-repo` stayed on the operator's ruling: it encodes this methodology's
+reference-sweep procedure rather than a general job, so it has no home upstream
+and no second copy to drift from.
 
 ### `common/mine-repo.sh`
 
@@ -368,84 +368,41 @@ commit, the route, and ⛔ what it could not get.
 is there has been dead on a live run, and falls back to a public proxy carrying
 none of the caller's credentials. ⛔ Reads only, on both routes.
 
-⚠ **Not in `check-twins.sh`.** Comparing two miners means fetching a live
-third-party repository twice on every run, which would make a local check
-depend on somebody else's uptime, and the output is a directory rather than a
-verdict. ⭐ The pair was proved instead by running both halves and both routes
-against one target: all four runs returned 26 issues, 13 comments, 0 review
-comments, 1 release and 1 tag. That comparison is what caught the `ConvertTo-Json`
-defect described in the `.ps1`, where a one-element array serialised as a bare
-object and every count read as a field count.
+⛔ **ITS PAGE JOINER WAS WRONG FOR MONTHS AND THIS FILE SAID WHY NOBODY WOULD
+FIND OUT.** The credential-free route pages by hand, and the sh half joined the
+pages by counting `[` and `]` over the raw text, which counts the brackets
+inside string values. Comment bodies are markdown. Measured on 2026-08-30 on
+one Windows 11 machine, against `firasuke/mussel` on the proxy route: **0
+comments before, 202 after**, with the run printing `comments: ok` both times.
+A consumer reported it.
 
-### `common/deslop.sh`
+⚠ **The exclusion that hid it was CORRECT and too broad.** Comparing two
+miners does mean fetching a live third-party repository twice per run, which
+would make a local check depend on somebody else's uptime. That covers the
+FETCH. It never covered the JOIN, and the sentence that used to sit here said
+the pair "was proved instead by running both halves against one target, which
+is stronger evidence". ⛔ It was not stronger: that target's comment bodies had
+balanced brackets, so the comparison agreed on a defect both halves did not
+share.
 
-Which files in this tree address a reader as an agent.
+⭐ **`--selftest` is the replacement, and it is in `check-twins.sh`.** It runs
+the joiner and its guard against a built-in fixture carrying unbalanced
+brackets inside string values, with no network and no credential, and both
+halves must answer identically. It is in the local gate and in both CI jobs.
+Mutation-proved by restoring the old joiner: it exits 1.
 
-⭐ **An inventory, not a gate.** It exits 0 whether it finds forty or none,
-exactly as the probe does, because in the repository that ships them their
-presence is correct. Only `--apply` changes anything.
+```bash
+sh scripts/common/mine-repo.sh --selftest
+```
 
-⛔ **`--apply` refuses on a dirty tree, deletes nothing outside the list it
-printed, and never touches history.** Rewriting published history un-publishes
-nothing, because every fork, mirror and archive keeps its copy, and it breaks
-every clone and every open contribution.
+⚠ **It found three more defects on its own first runs**, which is the argument
+for having it rather than a footnote. None was the defect it was written for:
 
-⚠ **Whether a file addresses an agent is a reading**, so this matches names and
-the default mode only prints. ⭐ It is anchored on the whole path for a reason:
-an unanchored match on "agent" takes `src/agents/` in a project that builds one,
-which is a deletion of somebody's source code. Both halves were run against
-exactly that fixture, plus a lower-case `docs/agents.md` decoy, and neither
-took either.
-
-[`../docs/methodology/lean-adoption.md`](../docs/methodology/lean-adoption.md)
-is the procedure, and ⭐ the cheaper path is never installing the files at all.
-
-### `common/git-sync.sh`
-
-Commit and push with the rules in
-[`../docs/conventions/git.md`](../docs/conventions/git.md) enforced rather than
-remembered.
-
-⭐ **It arrived as a 674-line PowerShell script and now exists as both**: a
-POSIX sh implementation so every Linux and macOS project can run it, and a
-PowerShell twin because on Windows the sh one needs a POSIX layer that a native
-session may not have. ⚠ On Windows prefer the `.ps1`: it drives the native
-`git.exe` rather than one inside an msys layer.
-
-⛔ **An AI-attribution line is refused, never stripped.** Rewriting somebody's
-commit message is worse than declining it: the author never learns the rule.
-
-⛔ **A CI-skip marker is refused unless the flag was passed.** A message that
-merely mentions one skips CI, because the platform does not read the sentence
-around it.
-
-⚠ **It knows nothing about who you are.** Identity comes from the flags or from
-git config, and if neither has one it refuses rather than guessing.
-
-### `powershell-windows/wsl-ephemeral.ps1`
-
-⭐ **A wrapper. The implementation lives in `Azathothas/ToolKit`** and this file
-fetches it. Arguments pass through unchanged and the inner exit code is
-propagated, so callers of the old path keep working.
-
-**Why it moved.** A template that ships a working tool acquires that tool's
-defects, its issues and its release cadence, and every project started from the
-template inherits a snapshot nobody will ever update. One copy that can be
-fixed once is the whole point. The template keeps the entry point; the tool
-lives where it can have a backlog.
-
-⛔ **It is pinned to a COMMIT and verified against a SHA-256 before anything
-executes.** This wrapper downloads code and runs it, which is a supply chain,
-and it gets the same discipline as a third-party action pin for the same
-reason: a moving reference runs code nobody reviewed. A digest mismatch is a
-hard stop, the cached copy is deleted, and no network with no verified cache is
-an error rather than a silent skip. The `.NOTES` block in the file carries the
-environment overrides and the two commands that refresh the pin.
-
-⚠ **Bumping the pin is a deliberate act, so a fix upstream does not arrive on
-its own.** That is the cost of pinning and it is the correct trade here: the
-alternative is every project started from this template executing whatever
-`main` says on the day it runs.
+| what it found | why nothing else would have |
+| --- | --- |
+| `command -v python3` resolving to a Store stub that is on `PATH` and exits 49 without running | presence is not capability, and the probe for it was `command -v` |
+| `node -e` argv indices read one off the end, so the join wrote no file and returned success | the guard read a file that was not there and found nothing wrong with it |
+| the PowerShell dispatch captured its own report into a return value, printing nothing while exiting 0 | a check that reports success having shown nothing looks exactly like a check that passed |
 
 ---
 
@@ -458,11 +415,18 @@ alternative is every project started from this template executing whatever
    read the exit code unpiped. **A guard that has never been seen to refuse is
    a guard nobody knows works.**
 
-   This is not optional advice. While building this repository, a licence
-   filler reported success over a licence whose warranty clause it had
-   corrupted, because its check only ever asked whether a placeholder
-   *survived*, never whether the substitution had reached too far. The mutation
-   test is what found it.
+   This is not optional advice. A licence filler here reported success over a
+   licence whose warranty clause it had corrupted, because its check only ever
+   asked whether a placeholder *survived*, never whether the substitution had
+   reached too far. The mutation test is what found it. ⚠ That filler has since
+   moved upstream; the instruction it produced has not.
+
+   ⛔ **And prove the NEGATIVE case too.** A guard that refuses everything is
+   as useless as one that refuses nothing, and it looks identical from a
+   passing mutation test. `mine-repo --selftest` asserts that an empty join
+   over a page with records is REFUSED and that an empty join over a genuinely
+   empty page is ACCEPTED, because a guard with only the first would turn every
+   repository that has no comments into a failed fetch.
 
 4. **Wire it into the gate**, if it can fail.
 5. **Document it**: here, and in the project's own tool table.

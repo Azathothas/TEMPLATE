@@ -24,10 +24,20 @@ keep going. Stop for my approval before writing anything.
 ```
 
 [`ROUTE.md`](ROUTE.md) classifies the situation from the tree, asks you one
-grouped question only if it has to, and routes to the right procedure: a new
-project, adopting an existing one, a new unit of work, resuming, reworking,
-adopting without any agent-facing content, re-syncing a project that adopted
-this earlier, or changing the template itself.
+grouped question only if it has to, and routes. It has two tables:
+
+- **the lifecycle jobs**, which change what the repository is: a new project,
+  adopting an existing one, a new unit of work, resuming, reworking, adopting
+  without any agent-facing content, re-syncing a project that adopted this
+  earlier, or changing the template itself;
+- ⭐ **the work itself**, which is most sessions: studying another project,
+  taking a measurement, running the gate, a review, vendoring, writing a
+  document, touching a shell, reaching for a tool, or needing a machine this one
+  is not.
+
+⚠ **The second table was missing and the heading above was a promise this file
+did not keep.** An operator wanting research done had to name the files by hand
+and the session got lost anyway, because nothing routed it.
 
 ⚠ **The rest of this section is the long form**, for when you already know
 which of those you want.
@@ -96,8 +106,8 @@ project, is [`bootstrap/prompts/01-existing-project.md`](bootstrap/prompts/01-ex
 | [`bootstrap/`](bootstrap/) | the once-only path: the procedure, your answer sheet, the prompts |
 | [`docs/`](docs/) | the methodology, the conventions, the security rules, the templates |
 | [`dotfiles/`](dotfiles/) | ignore, attribute, editor and CI files, by ecosystem |
-| [`LICENSES/`](LICENSES/) | canonical SPDX texts, and a script that fills one in without breaking it |
-| [`scripts/`](scripts/) | the environment probe, and the checks a project inherits |
+| [`LICENSES/`](LICENSES/) | canonical SPDX texts, and which four must never have their notice altered |
+| [`scripts/`](scripts/) | the environment probe, and the checks a project inherits. ⭐ [`docs/agent-tooling.md`](docs/agent-tooling.md) is what to reach for before installing anything. |
 | [`tools/`](tools/) | no tools, deliberately. Read its README before adding one. |
 
 Start at [`docs/README.md`](docs/README.md) for the map of which document
@@ -145,13 +155,17 @@ sh scripts/common/check-twins.sh
 | `check-no-secrets.sh` | a credential or a fingerprint of a private system, in tracked **and** untracked files |
 | `check-twins.sh` | ⭐ the two implementations of a check drifting apart |
 | `check-remote-items.sh` | ⭐ a pull request whose claims do not survive checking |
-| `fill-license.sh` | a licence whose notice would be corrupted by filling it in |
 | `mine-repo.sh` | ⚠ a helper, not a check: it fetches a repository's tracker and tree and **keeps** them, and refuses to write where an ignore rule would swallow the result |
 
 ⭐ **Each one has been mutation-proved**: the defect it exists to catch was
 planted, and the check was watched refusing it. A guard that has never been
-seen to refuse is a guard nobody knows works, and that discipline caught a real
-corruption in the licence filler here.
+seen to refuse is a guard nobody knows works.
+
+⚠ **And a green gate is a statement about the checks that RAN.** The page
+joiner in `mine-repo` discarded an entire comment corpus for months while every
+check above passed, because nothing compared it. A consumer of this template
+found it and reported it. [`scripts/README.md`](scripts/README.md) carries what
+that cost and what now runs.
 
 ---
 

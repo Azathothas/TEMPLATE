@@ -73,8 +73,20 @@ fact and nothing else.
 - the entry or defect it unblocks;
 - why it cannot be done outside the vendored tree, which is usually a seam the
   published interface does not expose;
+- ⭐ **the command that reproduces the defect**, runnable now and after the next
+  upstream release. That is what turns "could a release retire this patch" from
+  a judgement into a check: run it against the new copy, and a zero exit means
+  delete the patch and take theirs;
 - the upstream issue or pull request number, ⭐ **as a bare reference**, when
   one exists and a future release might make the patch redundant.
+
+⚠ **The reproduction is a real deliverable, not a nicety, and a project built
+from this template proved it.** It patched a script vendored from here, wrote
+the reproduction beside the patch with a committed fixture and a real parser as
+the oracle, and stated in the page that a future upstream release could retire
+the patch and how to tell. That report is what got the defect fixed at source.
+A patch page with no reproduction is a claim the next reconciliation has to
+re-derive.
 
 ⛔ **Never write:** a characterisation of the upstream project, its
 maintainers, its review culture, its responsiveness, or its quality. Not a

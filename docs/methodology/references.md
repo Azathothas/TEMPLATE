@@ -196,6 +196,16 @@ Where it goes is the project's choice, and there are two shapes that work:
 machine, and every claim built on it becomes unsourced the moment that machine
 is not the one asking.
 
+⚠ **One case is genuinely exempt, and it has to be said or it gets argued
+about: a repository whose whole job is to be copied.** A template cannot carry
+somebody else's tree, because every project started from it would inherit and
+then have to delete a corpus that was never about that project. ⭐ So a sweep
+run while maintaining one keeps the corpus outside the tree and pays the cost
+in the write-up instead: name every reference, the commit it was read at, and
+the exact command that re-fetches it. That is weaker than keeping the tree and
+it is the honest trade. ⛔ It is not a licence for a normal project: a project
+that ships code keeps its corpus.
+
 ⚠ **Say which shape the project chose, in the write-up, with the command that
 reaches it.** A corpus nobody can find is a corpus nobody kept.
 

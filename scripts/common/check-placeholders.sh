@@ -68,7 +68,37 @@ list_files() {
 # it looks for. Exempting only one is how the twins disagree, and it did: the
 # sh side scanned the new ps1 twin and reported four categories the ps1 side
 # did not.
-EXEMPT='^(docs/templates/|dotfiles/|bootstrap/|scripts/common/check-placeholders\.(sh|ps1))'
+#
+# -- ⛔ AND THE TEMPLATE EXEMPTION IS CONDITIONAL. HERE IS WHY -------------
+#
+# A directory-shaped exemption inherited by a project grants itself to whatever
+# lands in that directory. A project built from this template copied
+# docs/templates/ across whole, with every double-brace marker unfilled, and
+# this check reported the tree clean for as long as that was true, because the
+# exemption came with the directory. Its own maintainer filed it as a defect.
+#
+# ⭐ REPRODUCED HERE ON 2026-08-30, on a fixture that is that project's tree:
+# docs/templates/ kept, bootstrap/ deleted, one real README. The unconditional
+# version prints "no placeholders survived in 1 files" and exits 0. This
+# version reports two categories over the same tree, names the directory, and
+# exits 1. Both halves agree on it.
+#
+# ⭐ SO THE EXEMPTION LASTS EXACTLY AS LONG AS bootstrap/ DOES. During a
+# bootstrap the skeletons are being read from and must not fail; bootstrap/
+# BOOTSTRAP.md step 7 deletes both in one command; and the moment the bootstrap
+# is over the skeletons are scanned like any other file. A project that kept
+# them fails at its first gate instead of at the moment somebody believes one.
+#
+# ⚠ bootstrap/BOOTSTRAP.md is the marker rather than the directory, because an
+# empty bootstrap/ is not tracked by git and a stray one is not evidence of
+# anything.
+if [ -f "$REPO_ROOT/bootstrap/BOOTSTRAP.md" ]; then
+  EXEMPT='^(docs/templates/|dotfiles/|bootstrap/|scripts/common/check-placeholders\.(sh|ps1))'
+  TEMPLATES_EXEMPT=1
+else
+  EXEMPT='^(dotfiles/|scripts/common/check-placeholders\.(sh|ps1))'
+  TEMPLATES_EXEMPT=0
+fi
 
 if [ -n "$SCOPE" ]; then
   FILES=$(list_files "$SCOPE" | grep -Ev "$EXEMPT" || true)
@@ -169,9 +199,20 @@ if [ "$COUNT" -gt 0 ]; then
   printf 'Fill it in, or delete the section it is in. ⚠ Do not delete the\n'
   printf 'placeholder alone and leave the sentence around it: that produces a\n'
   printf 'claim nobody wrote.\n'
+  if [ "$TEMPLATES_EXEMPT" = "0" ] && [ -d "$REPO_ROOT/docs/templates" ]; then
+    printf '\n⛔ docs/templates/ IS IN SCOPE HERE, because bootstrap/ has gone.\n'
+    printf 'Those are the template'"'"'s own skeletons and this project kept them.\n'
+    printf 'Delete the directory: step 5 of the bootstrap is what reads from it\n'
+    printf 'and nothing after step 5 has a use for it.\n'
+  fi
   exit 1
 fi
 
-printf 'no placeholders survived in %s files (docs/templates, dotfiles and bootstrap are exempt)\n' \
-  "$(printf '%s\n' "$FILES" | wc -l | tr -d ' ')"
+if [ "$TEMPLATES_EXEMPT" = "1" ]; then
+  _exempt_note='docs/templates, dotfiles and bootstrap are exempt'
+else
+  _exempt_note='dotfiles is exempt; docs/templates is IN SCOPE because bootstrap/ has gone'
+fi
+printf 'no placeholders survived in %s files (%s)\n' \
+  "$(printf '%s\n' "$FILES" | wc -l | tr -d ' ')" "$_exempt_note"
 exit 0

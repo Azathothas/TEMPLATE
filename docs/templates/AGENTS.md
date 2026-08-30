@@ -111,18 +111,30 @@ Short enough to state here, and each has been broken before:
 
 ## Reach for the tool that exists
 
+⛔ **Before you install anything, write your own, or decide a job cannot be done
+here, read [`docs/agent-tooling.md`](docs/agent-tooling.md).** It is the
+catalogue of what already exists and where each one lives.
+[`docs/containers.md`](docs/containers.md) is the one procedure long enough to
+need its own page.
+
 ⚠ **Reach for the purpose-built tool first**, for the reason
 [`docs/methodology/authoring.md`](docs/methodology/authoring.md) gives: a general one produces answers that
 are plausible and wrong**, which is the hardest kind to catch.
 
+⛔ **A tool being absent is a measurement, not a verdict.**
+[`docs/methodology/sessions.md`](docs/methodology/sessions.md) is the rule: a
+missing tool closes one route, not the question, and three routes considered is
+the standard before anything is recorded as not-doable.
+
 | you want to | use | not |
 | --- | --- | --- |
 | know what host this is and what is installed | `scripts/doctor/` | assuming |
-| write a file whose content has quotes, backticks or a dollar sign in it | `scripts/common/write-file.mjs` | a heredoc. ⚠ It is not reliably literal; see the shell convention. |
-| patch one exact string in a file | `write-file.mjs replace --expect N` | `sed -i`, which reports success over a no-op |
-| commit and push | `git-sync.sh`, or ⭐ `git-sync.ps1` on Windows | `git commit` directly, which enforces none of the rules |
+| know what tool does a job | ⭐ [`docs/agent-tooling.md`](docs/agent-tooling.md) | installing something, or writing your own |
+| write a file whose content has quotes, backticks or a dollar sign in it | the file writer named in that catalogue | a heredoc. ⚠ It is not reliably literal; see the shell convention. |
+| patch one exact string in a file | the same writer, in the mode that declares how many matches it expects | `sed -i`, which reports success over a no-op |
+| commit and push | the commit helper named in that catalogue | `git commit` directly, which enforces none of the rules |
 | run any check on Windows | ⭐ the `.ps1` half of the pair | the `.sh` half. ⚠ Native PowerShell may have no `sed`, and its `sort` is an alias for `Sort-Object`, which succeeds and answers differently. |
-| run something on Linux from a Windows host | `scripts/powershell-windows/wsl-ephemeral.ps1`, the wrapper. ⚠ It fetches a pinned commit from `Azathothas/ToolKit` and needs network on first use. | installing a distro by hand and leaving it there |
+| run something on Linux from a Windows host | ⭐ [`docs/containers.md`](docs/containers.md) | installing a distro by hand and leaving it there |
 | {{understand code, find callers, see the blast radius}} | {{the indexed call graph, if this project has one}} | {{grep as the first move}} |
 | {{know the current state of the tree and the deployment}} | {{the state command}} | {{re-deriving it by hand}} |
 | {{know whether the checks pass}} | {{the gate command}} | {{running some of them}} |
