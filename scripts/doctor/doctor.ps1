@@ -339,6 +339,7 @@ function Invoke-Limited([string]$FilePath, [string[]]$Arguments, [int]$TimeoutMs
 $repo = [ordered]@{
     is_git = $false; root = ''; branch = ''; remote = ''
     dirty = $false; commits = 0
+    shallow = $false; identity = ''; hooks_path = ''
     remote_looks_like_template = $false
     has_codegraph = $false; ecosystems = @()
 }
@@ -361,6 +362,18 @@ if ($gitPath) {
         $cnt          = Get-GitValue @('rev-list','--count','HEAD')
         if ($cnt -match '^[0-9]+$') { $repo.commits = [int]$cnt }
         if ($repo.remote -match 'template') { $repo.remote_looks_like_template = $true }
+        # A SHALLOW CLONE ANSWERS EVERY QUESTION AND ANSWERS SOME OF THEM
+        # WRONG. `git log` works and a merge base against a branch whose
+        # commits were never fetched cannot be computed, with an error naming
+        # the commit rather than the depth. A machine somebody else
+        # provisioned usually hands one over. docs/hosted-sessions.md.
+        if ((Get-GitValue @('rev-parse','--is-shallow-repository')) -eq 'true') { $repo.shallow = $true }
+        # AN UNSET IDENTITY IS NOT VISIBLE UNTIL THE FIRST COMMIT, and a wrong
+        # author is not something a later commit can correct.
+        $gn = Get-GitValue @('config','user.name')
+        $ge = Get-GitValue @('config','user.email')
+        if ($gn -and $ge) { $repo.identity = "$gn <$ge>" }
+        $repo.hooks_path = Get-GitValue @('config','core.hooksPath')
     }
 }
 if (Test-Path -LiteralPath '.codegraph' -PathType Container) { $repo.has_codegraph = $true }
@@ -617,9 +630,18 @@ Write-Output ''
 Write-Output 'REPO'
 if ($repo.is_git) {
     Write-Row 'git root' $repo.root
-    Write-Row 'branch'   ('{0} ({1} commits)' -f $repo.branch, $repo.commits)
+    Write-Row 'branch'   ('{0} ({1} commits{2})' -f $repo.branch, $repo.commits,
+        $(if ($repo.shallow) { ', SHALLOW' } else { '' }))
     Write-Row 'origin'   $(if ($repo.remote) { $repo.remote } else { 'none' })
     Write-Row 'tree'     $(if ($repo.dirty) { 'dirty' } else { 'clean' })
+    Write-Row 'identity' $(if ($repo.identity) { $repo.identity } else { 'NOT SET' })
+    Write-Row 'hooks path' $(if ($repo.hooks_path) { $repo.hooks_path } else { 'not set' })
+    if ($repo.shallow) {
+        Write-Output '  the clone is shallow. A merge base against an unfetched commit cannot be computed.'
+    }
+    if (-not $repo.identity) {
+        Write-Output '  no commit identity is configured here. Set it before the first commit.'
+    }
     if ($repo.remote_looks_like_template) {
         Write-Output '  origin still points at a template remote. Detach before committing project work.'
     }

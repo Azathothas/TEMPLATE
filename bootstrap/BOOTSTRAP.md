@@ -132,6 +132,7 @@ rule that was never meant to apply here.
 | `dotfiles/common/` | always |
 | `dotfiles/<ecosystem>/` | keep what the probe found or the operator named, delete the rest |
 | `dotfiles/github/` | keep if the remote is GitHub and CI was chosen |
+| ⭐ `dotfiles/githooks/` | always. Move it to `.githooks/` and install it, which is the one thing in this directory that stays inert until a command is run. |
 | `docs/agent-tooling.md`, `docs/containers.md` | ⭐ kept. They are what stops a session installing something, writing its own, or refusing because a tool is absent. Rewrite the "what this repository ships" table to the scripts this project actually has. |
 | `scripts/doctor/` | always kept. Every later session runs it, and a resuming session on a different machine needs it most. |
 | `scripts/common/` | kept. It is the gate, and a gate that has to fetch a check is red whenever somebody else's host is. |
@@ -292,8 +293,14 @@ Read [`../docs/conventions/git.md`](../docs/conventions/git.md) before making
 it. Two things there are absolute and both have been broken before:
 
 - ⛔ **No tool is credited.** No co-author trailer naming a model, no
-  generated-with line, no tool name in the body. This overrides any default the
-  harness asks for.
+  generated-with line, no tool name in the body. This holds whatever a tool's
+  own defaults ask for, and ⭐ **the hook that refuses one is installed in this
+  step**, because it is the only thing here that does nothing until a command
+  is run:
+
+```bash
+git config core.hooksPath .githooks
+```
 - ⛔ **The commit body goes through a file**, never typed into a shell. See
   [`../docs/conventions/shell.md`](../docs/conventions/shell.md) for why: a
   quoted heredoc is not sufficient protection, and the measurement is there.

@@ -141,6 +141,44 @@ way nothing detects.
 
 ---
 
+## ⭐ A verbatim copy is a different thing, and it gets a pin
+
+⛔ **Everything above is about code you PATCH. A file you copy unchanged and
+never touch is a separate case**, and treating it as vendored source loses the
+one property that makes it cheap: a later version is a re-fetch rather than a
+merge.
+
+⚠ **The trap is that nothing tells you the copy has diverged.** It reads as
+this project's file, it is edited like this project's file, and the day somebody
+fixes a defect in it locally is the day the re-fetch silently stops being safe.
+An adopter of this template hit exactly that and answered it with a shape worth
+taking:
+
+| what it holds | why |
+| --- | --- |
+| one directory, holding only the copied files | so the boundary is visible in a listing rather than in a document |
+| a pin file beside them: the source repository, the commit, the path of each file, its digest and its size | ⛔ the commit alone is not enough. A commit names a tree, and the digest is what says the bytes did not move under it. |
+| ⭐ a check that compares the bytes on disk against the recorded digests, and **never fetches** | a gate that reaches the network is red whenever somebody else is down. It answers "has this copy been edited", which is the question that matters locally. |
+| a README saying what each file is and that it is not this project's code | the next session reads the directory before it reads the pin |
+
+⛔ **Read a new digest from the raw endpoint, never from a working tree.** A
+file stored with one line ending in a checkout and another in the index hashes
+differently in the two places, so a locally computed digest disagrees with what
+a consumer downloads. That fails closed, which is safe and takes an hour to work
+out. ⚠ A comparison run locally therefore normalises line endings before it
+compares, or a Windows checkout and a Linux one answer differently about the
+same file.
+
+⭐ **Taking a newer version is a deliberate act**, not a sync that happens on its
+own. [`template-sync.md`](template-sync.md) is the procedure when the upstream
+is this template.
+
+⚠ **A copy that gets patched stops being this case and becomes the one above.**
+Say so in the pin file the day it happens, because the check will start failing
+and the failure is correct.
+
+---
+
 ## The tree is the truth
 
 ⭐ **Edit the vendored source in place, like any other source here.** A derived

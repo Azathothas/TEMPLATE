@@ -84,7 +84,7 @@ underneath and the original keeps its wording, because the original is how the
 item has always been referred to and a silently edited premise is a record of
 nothing.
 
-⚠ **The prose rules still apply here.** Character set, marker density and
-banned vocabulary are checked in this directory like any other. ⭐ The one rule
+⚠ **The prose rules still apply here.** Character set and marker density are
+checked in this directory like any other. ⭐ The one rule
 that is relaxed is one-fact-one-home, and
 [`../methodology/history.md`](../methodology/history.md) says why.

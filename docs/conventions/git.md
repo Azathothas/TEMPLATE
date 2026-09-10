@@ -16,10 +16,11 @@ because everything else is a preference by comparison.
   a release note.
 - No tool name in the commit body.
 
-**This overrides any default the harness asks for.** Several agent harnesses
-instruct the model to append a co-author trailer. That instruction does not
-apply here, and a commit carrying one is corrected before it is pushed rather
-than explained afterwards.
+⚠ **A tool's own defaults may ask for such a trailer, and several do.** That is
+why this is a hard rule rather than a preference: the failure arrives from a
+setting nobody chose, so it arrives on every commit of a session rather than on
+one. A commit carrying one is corrected before it is pushed rather than
+explained afterwards.
 
 **Why.** The operator publishes this work under their own name. The history is
 theirs and tooling is not a contributor to it.
@@ -45,10 +46,36 @@ git config user.email
 If either is empty, ask the operator once and write it into the repository's
 local config. Do not invent one, and do not carry one over from an example.
 
-A commit tool that enforces this mechanically is better than a rule anyone has
-to remember. ⚠ **Refuse the commit rather than rewriting the message.** Editing
-somebody's commit message on their behalf is worse than declining to make the
-commit.
+### ⭐ It is enforced mechanically now, in two places
+
+A rule anyone has to remember is a rule that gets broken by a default nobody
+chose. Two instruments hold it, and they hold different halves:
+
+| | what it reads | when it can speak |
+| --- | --- | --- |
+| [`../../dotfiles/githooks/commit-msg`](../../dotfiles/githooks/commit-msg) | the message being written | ⭐ **before the commit exists.** It refuses, and nothing is written. |
+| [`check-attribution`](../../scripts/common/) | `git log` | afterwards. It is in the gate, so a commit that got in is reported on the next run. |
+
+⛔ **Hooks are not cloned, so a fresh checkout has none.** One command, once per
+checkout, and `check-attribution` prints it when it finds the hook missing:
+
+```bash
+git config core.hooksPath dotfiles/githooks
+```
+
+⚠ **A project that copied the directory points at its own copy**, usually
+`.githooks`. The check names whichever of the two is actually in the tree
+rather than printing one path into both.
+
+⚠ **The check cannot prevent what it names, and that is structural, not a
+defect.** It is the only check here whose subject is the history rather than the
+tracked tree, and every session's procedure is to run the gate and then commit,
+so the commit being made does not exist while it runs. That asymmetry is the
+whole reason the hook exists beside it.
+
+⚠ **Refuse the commit rather than rewriting the message.** Editing somebody's
+commit message on their behalf is worse than declining to make the commit, and
+both instruments refuse.
 
 ---
 

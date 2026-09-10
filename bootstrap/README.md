@@ -60,6 +60,12 @@ the project, because this directory is deleted at the end of the bootstrap.
 | adding a unit of work | [`prompts/02-new-work.md`](prompts/02-new-work.md) |
 | a session stopped before it finished | [`prompts/03-resume.md`](prompts/03-resume.md) |
 | your validation failed | [`prompts/04-rework.md`](prompts/04-rework.md) |
+| ⭐ a project an earlier agent left in a bad state | [`prompts/06-rescue-repo.md`](prompts/06-rescue-repo.md) |
+| a project moving to a new owner, name or repository | [`prompts/07-migrate-repo.md`](prompts/07-migrate-repo.md) |
+
+⚠ **The last two are longer than the rest and that is the point.** Each covers a
+job with a lot of ways to go quietly wrong, and each names the ones that have.
+They assume nothing an earlier agent wrote is true until it has been checked.
 
 ⚠ **For a normal boundary, use the prompt the agent printed**, not one of
 these. It names the resume point and carries the warnings from the session that

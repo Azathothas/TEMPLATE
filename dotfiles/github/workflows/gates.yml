@@ -37,9 +37,15 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
+      # ⛔ fetch-depth 0, not 1, and the reason is check-attribution. It reads
+      # `git log` rather than the tree, so a one-commit checkout makes it scan
+      # one message and report success about the whole history. It says so on
+      # its own, and a report nobody reads is not a scope.
+      # ⚠ Set this back to 1 only if the project did not take that check. A
+      # full fetch costs seconds on a small repository and more on a large one.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 1
+          fetch-depth: 0
 
       # The probe. Cheap, and it makes a CI failure legible.
       - name: probe the runner

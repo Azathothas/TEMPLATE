@@ -47,7 +47,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
+      # ⛔ fetch-depth 0, and it is check-attribution that needs it. The default
+      # is 1, which is a shallow clone: that check reads `git log`, so with one
+      # commit fetched it scans one message and reports success about the whole
+      # history. It says so on its own now, but a report nobody reads is not a
+      # scope. The full history is what makes the answer mean what it says.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
 
       # ⚠ THE EXIT CODE IS CAPTURED, NOT ECHOED AFTER THE FACT. This step used
       # to run the probe and then `echo "exit=$?"`. GitHub runs `run:` under
@@ -101,6 +108,11 @@ jobs:
 
       - name: no literal control byte in any text file
         run: sh scripts/common/check-control-bytes.sh
+
+      # ⚠ This one reads `git log` rather than the tree, which is why the
+      # checkout above asks for the whole history.
+      - name: no commit credits a tool
+        run: sh scripts/common/check-attribution.sh
 
       # ⚠ Exit 2 means "could not run", and this repository has no CHANGELOG.md
       # of its own, so 2 is the expected answer here and it is not a failure.
@@ -225,7 +237,12 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 15
     steps:
+      # fetch-depth 0 for the same reason the ubuntu job asks for it:
+      # check-attribution.ps1 reads git log, and the default checkout is one
+      # commit deep.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
 
       - name: doctor.ps1 parses
         shell: pwsh
@@ -264,6 +281,7 @@ jobs:
             @{ f = 'check-one-home.ps1';       a = @() },
             @{ f = 'check-placeholders.ps1';   a = @() },
             @{ f = 'check-control-bytes.ps1';  a = @() },
+            @{ f = 'check-attribution.ps1';    a = @() },
             @{ f = 'check-no-secrets.ps1';     a = @('-Public') },
             @{ f = 'mine-repo.ps1';            a = @('-SelfTest') }
           )

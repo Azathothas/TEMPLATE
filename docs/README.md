@@ -50,6 +50,7 @@ is, [`ADOPT.md`](../ADOPT.md) for an existing repository elsewhere, and
 | --- | --- |
 | ⭐ [`agent-tooling.md`](agent-tooling.md) | what tool does what job, and where each one lives. ⛔ Read it before installing anything, writing your own, or deciding a job cannot be done here. |
 | [`containers.md`](containers.md) | measuring something this machine cannot measure, in a machine you throw away afterwards. |
+| ⭐ [`hosted-sessions.md`](hosted-sessions.md) | a machine somebody else provisioned, which will be gone afterwards: what to read off it, what it lies about, and the two ways it dies quietly. |
 
 ## security
 

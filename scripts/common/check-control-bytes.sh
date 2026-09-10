@@ -73,59 +73,132 @@ REPO_ROOT=$(git rev-parse --show-toplevel)
 cd "$REPO_ROOT" || { printf 'check-control-bytes: cannot enter %s\n' "$REPO_ROOT" >&2; exit 2; }
 
 # Extensions asserted to be TEXT. Anything else is out of scope by construction.
-TEXT_RE='\.(ts|tsx|js|mjs|cjs|jsx|json|md|sql|css|scss|html|toml|yaml|yml|sh|ps1|py|rs|go|c|h|cpp|hpp|java|rb|php|txt|cfg|ini|conf|env\.example)$'
+# ⛔ THE TWIN CARRIES THE SAME LIST, and for a while it did not: this half had
+# an entry the PowerShell half lacked. check-twins compares ANSWERS on the tree
+# it is run against, and nothing in this tree has that extension, so the
+# difference was invisible for as long as it existed.
+TEXT_RE='\.(ts|tsx|js|mjs|cjs|jsx|json|md|sql|css|scss|html|toml|yaml|yml|sh|ps1|py|rs|go|c|h|cpp|hpp|java|rb|php|txt|cfg|ini|conf)$'
 
-FILES=$(
-  {
-    git ls-files 2>/dev/null
-    git ls-files --others --exclude-standard 2>/dev/null
-  } | sort -u | grep -E "$TEXT_RE" || true
-)
-if [ -z "$FILES" ]; then
+# ⛔ THE FILE LIST GOES THROUGH A FILE, LINE BY LINE, NEVER THROUGH WORD
+# SPLITTING. `for f in $FILES` splits on every space, so a path containing one
+# became two paths that do not exist, both failed the `[ -f ]` test, both were
+# skipped, and the check reported success over a file it had never opened.
+# ⭐ Found with a fixture, not by reasoning: a file named with a space carrying
+# a NUL was reported by the PowerShell twin and not by this one.
+WORK="${TMPDIR:-/tmp}/.checkcb.$$"
+mkdir -p "$WORK" || { printf 'check-control-bytes: cannot write to %s\n' "$WORK" >&2; exit 2; }
+trap 'rm -rf "$WORK"' EXIT INT TERM
+
+{
+  git ls-files 2>/dev/null
+  git ls-files --others --exclude-standard 2>/dev/null
+} | LC_ALL=C sort -u | grep -E "$TEXT_RE" > "$WORK/all" || true
+
+NFILES=0
+: > "$WORK/list"
+while IFS= read -r f; do
+  [ -n "$f" ] || continue
+  [ -f "$f" ] || continue          # tracked but deleted; git reports that itself
+  NFILES=$((NFILES + 1))
+  printf '%s\n' "$f" >> "$WORK/list"
+done < "$WORK/all"
+
+if [ "$NFILES" = "0" ]; then
   printf 'check-control-bytes: no text files in scope\n' >&2
   exit 2
 fi
 
-# ⛔ THE PATTERN IS BUILT BY printf, NOT WRITTEN AS A LITERAL. POSIX grep does
-# NOT expand `\001` inside a bracket expression: it reads the backslash and the
-# digits as ordinary characters, so the class would match a backslash, a digit
-# and most of the alphabet. This exact mistake reported a control byte in every
-# one of forty-eight clean files in this repository, and the real count was
-# zero. printf turns the escapes into real bytes first.
+# ⭐ ONE awk PASS OVER EVERY FILE, NOT FIVE PROCESSES PER FILE. The loop this
+# replaced ran grep, head, cut, wc and tr per file: about five spawns each, and
+# a spawn under Git Bash costs more than reading the file does.
 #
-# C0 controls except the three that are legitimately in text: tab, newline and
-# carriage return. NUL cannot live in a shell variable, so it is found
-# separately below.
-CTRL_CLASS=$(printf '[\001-\010\013\014\016-\037]')
+# Measured on one Windows 11 machine (10.0.26200) under Git Bash 5.3.15 on
+# 2026-09-10, the two versions run back to back: 13.4s over 106 text files
+# before, 0.6s over 111 after. ⚠ The second tree is the LARGER one, so the
+# comparison understates the change rather than flattering it.
+#
+# ⚠ NUL IS WHY THIS IS NOT SIMPLY grep. A NUL cannot live in a shell variable,
+# so it cannot be put in a pattern, and measured here on GNU grep 3.0 a file
+# holding one is neither matched nor reported as binary: it is passed over in
+# silence. awk finds it, because `sprintf("%c", 0)` builds the byte inside awk
+# where no shell touches it.
+#
+# ⛔ AND awk IS NOT ASSUMED TO BE ABLE TO. Some awk implementations hold a
+# record as a C string and truncate it at the first NUL, which would make this
+# check report clean over a file full of them. That is the defect class this
+# repository exists to refuse, so the ability is PROVED against a fixture on
+# every run, and a `no` selects a byte-at-a-time reader rather than a wrong
+# answer. The fixture crosses a pipe, never a variable.
+NUL_OK=no
+if printf 'a\000b\n' | LC_ALL=C awk 'BEGIN { z = sprintf("%c", 0) } index($0, z) > 0 { f = 1 } END { exit(f ? 0 : 1) }' 2>/dev/null; then
+  NUL_OK=yes
+fi
+if [ "$NUL_OK" = "no" ] && ! command -v od >/dev/null 2>&1; then
+  printf 'check-control-bytes: this awk cannot see a NUL byte, and od is not\n' >&2
+  printf '  installed, so nothing here can. That is "could not run", not a pass.\n' >&2
+  exit 2
+fi
+
+# ⛔ IT REPORTS THE FIRST OFFENDING BYTE, ITS LINE AND ITS VALUE, which is what
+# the twin reports. This half used to report a class name instead of a byte and
+# to take its line number out of `grep -n` output, which reads
+# `Binary file X matches` whenever the file also held a NUL, so the reported
+# line number was a fragment of that sentence. The fixture found that too.
+LC_ALL=C awk -v nulok="$NUL_OK" '
+  function q(s) { gsub(/\047/, "\047\\\047\047", s); return "\047" s "\047" }
+  function scan_lines(path,   n, line, i, ch, v) {
+    n = 0
+    while ((getline line < path) > 0) {
+      n++
+      for (i = 1; i <= length(line); i++) {
+        ch = substr(line, i, 1)
+        if (!(ch in ordv)) continue
+        v = ordv[ch]
+        if (v == 9 || v == 13) continue
+        close(path)
+        return n " " v
+      }
+    }
+    close(path)
+    return ""
+  }
+  # ⚠ ONE PROCESS PER FILE, and it runs only where the reader above cannot.
+  function scan_bytes(path,   cmd, n, i, v) {
+    cmd = "LC_ALL=C od -An -v -tu1 " q(path)
+    n = 1
+    while ((cmd | getline) > 0) {
+      for (i = 1; i <= NF; i++) {
+        v = $i + 0
+        if (v == 10) { n++; continue }
+        if (v == 9 || v == 13) continue
+        if (v < 32) { close(cmd); return n " " v }
+      }
+    }
+    close(cmd)
+    return ""
+  }
+  BEGIN {
+    # ⚠ awk has no ord(). The table is built once, over the range that matters.
+    for (i = 0; i < 32; i++) ordv[sprintf("%c", i)] = i
+    while ((getline path < ARGV[1]) > 0) {
+      if (path == "") continue
+      hit = (nulok == "yes") ? scan_lines(path) : scan_bytes(path)
+      if (hit == "") continue
+      split(hit, p, " ")
+      printf "  %s:%d a control byte 0x%02x\n", path, p[1], p[2]
+    }
+    close(ARGV[1])
+  }
+' "$WORK/list" > "$WORK/findings" 2>/dev/null
 
 COUNT=0
-NFILES=0
 REPORT=""
-
-for f in $FILES; do
-  [ -f "$f" ] || continue          # tracked but deleted; git reports that itself
-  NFILES=$((NFILES + 1))
-
-  hit=$(LC_ALL=C grep -n "$CTRL_CLASS" "$f" 2>/dev/null | head -3 || true)
-  if [ -n "$hit" ]; then
-    COUNT=$((COUNT + 1))
-    line=$(printf '%s' "$hit" | head -1 | cut -d: -f1)
-    REPORT="$REPORT  $f:$line a C0 control byte
+while IFS= read -r line; do
+  [ -n "$line" ] || continue
+  COUNT=$((COUNT + 1))
+  REPORT="$REPORT$line
 "
-    continue
-  fi
-
-  # ⚠ NUL IS A SEPARATE TEST. It cannot be put in the class above, and it is
-  # the single commonest offender: it is what somebody reaches for as a
-  # composite-key separator.
-  n_all=$(wc -c < "$f" 2>/dev/null || echo 0)
-  n_strip=$(LC_ALL=C tr -d '\000' < "$f" 2>/dev/null | wc -c || echo 0)
-  if [ "$n_all" != "$n_strip" ]; then
-    COUNT=$((COUNT + 1))
-    REPORT="$REPORT  $f a NUL byte
-"
-  fi
-done
+done < "$WORK/findings"
 
 if [ "$JSON" = "1" ]; then
   printf '{"schema":"check-control-bytes/1","problems":%s,"files":%s}\n' "$COUNT" "$NFILES"

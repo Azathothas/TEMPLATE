@@ -72,8 +72,8 @@ generated   ISO 8601 UTC
 probe       impl, fast, group
 host        os flavor wsl container kernel arch distro distro_version
             shell writable_tmp network
-repo        is_git root branch remote dirty commits
-            remote_looks_like_template has_codegraph ecosystems
+repo        is_git root branch remote dirty commits shallow identity
+            hooks_path remote_looks_like_template has_codegraph ecosystems
 summary     tools_found tools_missing
 tools[]     id group found path version
 notes[]     things the probe wants said out loud
@@ -91,6 +91,12 @@ Field notes that are easy to read wrong:
 - `remote_looks_like_template` is a warning, not a fact about the project. It
   fires when `origin` contains the word template, which is the state a fresh
   clone of this repository is in and must leave before any project work.
+- ⭐ `shallow`, `identity` and `hooks_path` are the three facts a session on a
+  machine somebody else provisioned gets wrong most often, which is why the
+  probe reads them rather than leaving each session to assume.
+  [`../../docs/hosted-sessions.md`](../../docs/hosted-sessions.md) says what
+  each costs. ⚠ `identity` is empty when either half of the name and email pair
+  is unset, because half an identity produces the same wrong author as none.
 - `version` empty with `found` true means the tool answered nothing. That is
   reported in `notes` and it usually means a shim rather than an install.
 

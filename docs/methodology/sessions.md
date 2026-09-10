@@ -370,10 +370,11 @@ have had capabilities this one lacks, or the reverse.
 [`../conventions/shell.md`](../conventions/shell.md) section 10 says what that
 costs and what to do instead.
 
-⛔ **And do not substitute the harness's own scheduler, monitor or wake-up tool
-for the wait.** They end the turn by design. A session that finds a foreground
-`sleep` blocked and reaches for a built-in that waits has not found a way to
-follow this rule; it has found a way to break it that reads like compliance.
+⛔ **And a scheduler, a monitor or a wake-up facility does not substitute for
+the wait.** Each of them ends the turn by design. A session that finds a
+foreground `sleep` blocked and reaches for a built-in that waits has not found a
+way to follow this rule; it has found a way to break it that reads like
+compliance.
 
 ⭐ **The best hold has no timer in it.** Block on the work: run the job in the
 foreground and let its own output be the tick, or tail its log with the job's

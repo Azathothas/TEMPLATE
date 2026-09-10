@@ -5,14 +5,16 @@
 # check-twins.ps1 is what stops the two drifting.
 #
 # The defect this exists to catch is a document that was true when it was
-# written. Three shapes of it, and every one is invisible to every other check:
+# written. Four shapes of it, and every one is invisible to every other check:
 #
 #   - a link or a path that stopped resolving when something was renamed;
 #   - a fenced shell block that does not parse, which is a block nobody can
 #     copy and paste;
 #   - an angle-bracket placeholder inside a shell block: a human reads it as
 #     "fill this in" and bash reads it as a redirect, so the reader gets a
-#     cryptic syntax error instead of an obvious instruction.
+#     cryptic syntax error instead of an obvious instruction;
+#   - a PowerShell invocation in a block without -NoProfile, which runs the
+#     profile scripts of whoever owns the machine before the command.
 #
 # ⚠ CONTROL BYTES ARE NOT CHECKED HERE. That rule scanned markdown only while
 # every .ts, .py, .rs and .sh in the tree went unchecked, so it moved to
@@ -21,8 +23,15 @@
 # ⚠ THE CHARACTER HALF OF THE PROSE RULE IS NOT HERE. No em dash and no
 # character outside the five belong to check-markers.ps1, which reads every
 # tracked text file rather than markdown alone. Run both. What stays here is
-# what is specific to a document: links, fenced blocks, placeholders, banned
-# vocabulary and orphan pages.
+# what is specific to a document: links, fenced blocks, placeholders and
+# orphan pages.
+#
+# ⛔ WRITING STYLE IS NOT CHECKED HERE AND MUST NOT BE. Both headers
+# claimed a banned-vocabulary rule that neither half implemented, and arming
+# it settled the question rather than closing it: a word list catches
+# `blazing`, which nobody here writes, and cannot catch `load-bearing`, which
+# this tree writes twelve times. docs/conventions/prose.md names the standard
+# instead, and the review pass reads for it.
 #
 # ⛔ WHAT IT DOES NOT CHECK IS WHETHER A CLAIM IS TRUE. That is a reading, and
 # it belongs to the review pass. A guard that tried to verify prose would
@@ -197,10 +206,11 @@ foreach ($rel in $files) {
             $nblocks++
             $body = ($buf -join "`n")
 
-            if ($body -match '<[a-z][a-z0-9-]*>') {
-                Add-Problem ($rel + ':' + $start + ' shell-unsafe placeholder. bash reads it as a redirect; use UPPER_SNAKE')
-            }
-
+            # ⚠ PARSE FIRST, THEN PLACEHOLDER. The order used to be the other
+            # way round here and the sh twin has always reported parse first,
+            # so one block failing both produced two reports in two orders.
+            # check-twins compares the JSON and the exit code, which are equal
+            # either way, so nothing mechanical could see it.
             if ($shell) {
                 # ⛔ A TEMP FILE, NOT stdin. docs/conventions/shell.md: from
                 # PowerShell a native command's stdin is not byte-exact, and a
@@ -219,6 +229,28 @@ foreach ($rel in $files) {
                 finally { Remove-Item -LiteralPath $tmp -Force -ErrorAction SilentlyContinue }
             }
             else { $skippedParse++ }
+
+            if ($body -match '<[a-z][a-z0-9-]*>') {
+                Add-Problem ($rel + ':' + $start + ' shell-unsafe placeholder. bash reads it as a redirect; use UPPER_SNAKE')
+            }
+            # A PowerShell invocation without -NoProfile runs the profile
+            # scripts of whoever owns the machine first, and one that prints a
+            # line puts that line in front of the command output. Every example
+            # in this repository already passed it and nothing checked.
+            # docs/conventions/shell.md section 8.
+            foreach ($bline in ($body -split "`n")) {
+                # ⚠ THE LINE MUST START WITH THE COMMAND. Matching the name
+                # anywhere reported a comment mentioning the shell as an
+                # invocation missing a flag, which is refusing correct writing.
+                if ($bline -cmatch '^[ \t]*(pwsh|powershell)([ \t]|$)' -and
+                    $bline -cnotmatch '-NoProfile') {
+                    # -cnotmatch, not -notmatch: PowerShell's default is
+                    # case-insensitive and awk's is not, so the sh twin
+                    # would refuse a lower-case spelling this one allowed.
+                    Add-Problem ($rel + ':' + $start + ' a PowerShell invocation without -NoProfile. docs/conventions/shell.md section 8')
+                    break
+                }
+            }
             continue
         }
         if ($inBlock) { [void]$buf.Add($line) }

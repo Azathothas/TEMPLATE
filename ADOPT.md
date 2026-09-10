@@ -264,6 +264,7 @@ different answer, which is the worse of the two.
 | `docs/conventions/shell.md` | ⭐ quoting, exit codes, streams, line endings, platform traps. Useful in any repository, opinionated about none of them. |
 | `docs/conventions/forbidden-patterns.md` | the table to grep yourself against |
 | `scripts/common/check-markers.sh` | ⚠ the character allowlist and the marker density. **Offer it; do not apply it.** It is the most opinionated check here and a repository with an established voice should not inherit it by accident. |
+| `scripts/common/check-attribution.sh` and `dotfiles/githooks/commit-msg` | ⛔ **Offer it; do not apply it, and never run it against a history you are adopting without saying what it will do.** It reads `git log`, so on a repository whose earlier commits credit a tool it reports every one of them, and that history cannot be corrected without a rewrite the operator alone can authorise. ⭐ The hook is the half worth taking first: it changes nothing already committed and refuses the next one. |
 
 **Once the project carries third-party source:**
 

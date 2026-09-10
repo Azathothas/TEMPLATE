@@ -104,6 +104,72 @@ with a fixture, not by trusting the comparison to notice.
 whether the language does.** Every check in `common/` passes that test, which
 is why every one of them has two halves.
 
+---
+
+## ⭐ What the gate costs, and the third route when it costs too much
+
+⛔ **A gate long enough to skip is a gate that gets skipped.** That is the whole
+reason this section exists, and it is not a hypothetical: `--fast` exists here
+because one check was slow enough that somebody wanted a way past it.
+
+⚠ **Every number below is one machine on one day, and the tree it ran over is
+small.** Windows 11 Pro 10.0.26200, Git Bash 5.3.15, 2026-09-10. ⛔ A tree ten
+times this size does not take ten times as long by arithmetic; measure it
+there.
+
+⭐ **Both columns are runs, not arithmetic.** The "before" column is a fresh
+clone of the previous commit, driven back to back with the current tree in one
+session. An earlier draft of this table added up the individual checks to get a
+gate figure, which is a number nobody ran.
+
+| | before, 62 documents | after, 65 documents |
+| --- | --- | --- |
+| `check-docs.sh` | 25.8s | 4.9s |
+| `check-control-bytes.sh` | 13.4s | 0.6s |
+| the whole gate | 165.6s | 102.5s |
+| ⭐ the gate without `check-twins` | 58.0s | 21.1s |
+
+⚠ **The second column ran over the BIGGER tree**, because this session added
+documents to it. The comparison therefore understates the change rather than
+flattering it.
+
+⭐ **All of it was one defect with two names: a process per file, and five
+processes per file.** Under Git Bash a spawn costs more than reading the file
+does, so a loop that runs `grep`, `head`, `cut`, `wc` and `tr` per file spends
+almost all of its time in `fork`. Both were rewritten as one `awk` pass that
+opens the files itself, and both produce byte-identical answers on a clean tree.
+⚠ **The answers were captured before the rewrite and compared after**, which is
+the only reason that last clause is a fact rather than a hope.
+
+⛔ **`check-twins` is now 80% of the gate and nothing here will fix that.** It
+runs both halves of every pair, so it costs the sum of both implementations plus
+process startup, and it gets faster only when they do.
+
+### The third route: one program instead of two shells
+
+⚠ **Two adopters left the twin model, in two directions, and both were right for
+their tree.** This is worth knowing before writing a third shell check:
+
+| what they did | why |
+| --- | --- |
+| ⭐ [`Azathothas/ToolKit`](https://github.com/Azathothas/ToolKit) rewrote every rule as one Go program under `tools/check/`, and its `check-*.sh` and `.ps1` became thin wrappers over one named subcommand each | one implementation that runs natively on both hosts, so there is no second one to drift from and nothing to compare. Its own record puts the twin gate at about twelve minutes before the port and under a minute after, on its development host. |
+| two others rewrote their checks in Python | the same argument, reached from the other end: a `.sh` a gate depends on is a platform requirement in disguise |
+
+⛔ **This template does not take that route, and the reason is the one in the
+first paragraph of this file.** What ships here has to run with **no network and
+no toolchain**: a project that has to build a binary before it can run its gate
+has a gate that fails on a machine with no compiler, which is the first machine
+a fresh clone lands on. Two shells that both ship working is worth more here
+than one program that has to be built.
+
+⭐ **A PROJECT is not under that constraint, and should consider it once the
+gate gets long.** The trade is explicit: one implementation and no twin check,
+against a build step and a toolchain in the requirements. ⚠ **Do not vendor a
+copy of somebody else's checker to get there.** A tool kept in two repositories
+acquires two sets of defects, and one of the two never gets fixed;
+[`../docs/methodology/vendoring.md`](../docs/methodology/vendoring.md) is what to
+do instead.
+
 ⛔ **And ask it again about every EXCLUSION, which is what this repository got
 wrong.** An exclusion is written for a reason that covers part of a script, and
 then it is read as covering the script. `mine-repo`'s exclusion was correct
@@ -237,7 +303,14 @@ twenty stray shells holding their own files open.
 
 Do the documents still resolve, and are they written the way this
 repository writes documents. Relative links, fenced shell blocks that
-parse, shell-unsafe placeholders, banned vocabulary, and orphan pages.
+parse, shell-unsafe placeholders, and orphan pages.
+
+⛔ **It does NOT read for writing style, and its header says why.** This file
+and three others said it checked a banned vocabulary while no version of
+either half did. Arming that list over this tree found one word; the register
+that actually goes wrong is metaphor used as a technical term, which no list
+reaches. [`../docs/conventions/prose.md`](../docs/conventions/prose.md) names
+the standard and the review pass reads for it.
 
 ⚠ The template directories are exempt from the **link** check only: their
 links are written relative to where the file will live in a project. The
@@ -321,6 +394,51 @@ prints "Binary files differ" so a code review shows no diff at all.
 
 ⚠ The runtime value is identical either way, so only reviewability is ever at
 stake. That is exactly why it survives unnoticed.
+
+### `common/check-attribution.sh`
+
+Does any commit in this repository credit a tool.
+
+⛔ **[`../docs/conventions/git.md`](../docs/conventions/git.md) stated the rule
+from the start, said in as many words that a tool enforcing it beats a rule
+anyone has to remember, and nothing enforced it.** It is the rule most likely to
+be broken by a setting rather than by a decision: several agent tools instruct
+the model to append a co-author trailer, so the failure arrives on every commit
+of a session rather than on one.
+
+⛔ **It cannot prevent what it names, and the hook is why.** This is the only
+check here whose subject is `git log` rather than the tracked tree, and every
+session's procedure is to run the gate and then commit, so the commit being made
+does not exist while it runs. ⭐ `--message FILE` applies the same rules to a
+message that is not a commit yet, and
+[`../dotfiles/githooks/commit-msg`](../dotfiles/githooks/commit-msg) is what
+calls it. That half refuses; this half records.
+
+⚠ **The hook state is a NOTE, not a verdict.** Hooks are not cloned, so failing
+the gate over a local git setting would make every fresh clone of this
+repository red. The check prints the one command instead, naming whichever hook
+directory is actually in the tree.
+
+⛔ **It also reports whether git will actually RUN the hook.** git invokes a
+hook directly rather than through an interpreter, so a `commit-msg` without the
+executable bit is skipped in silence on any POSIX host: installed, present,
+correct, and never called. ⚠ It is the one file here where the bit matters,
+because every `.sh` in this directory is invoked as `sh script.sh` and is mode
+644 on purpose. ⭐ The bit that ships is the one in the INDEX, not the one on
+disk, since a Windows checkout does not carry it. This check exists because the
+hook committed as 644 the first time.
+
+⚠ **A shallow clone is reported too, for the same reason.** A default CI
+checkout fetches one commit, and this check reads `git log`, so without the full
+history it scans one message and reports success about all of them. Both
+workflow files in this repository ask for the full history and say why.
+
+⚠ **Three rules were ported from upstream and a fourth deliberately was not.**
+`Azathothas/ToolKit` also refuses any emoji in a commit message, on the evidence
+that its whole history is ASCII to the byte. Measured here on 2026-09-10, one of
+this repository's six commits carries a ⛔ while quoting a rule, so the same rule
+would fail this tree on its own history. A rule with no incident behind it in
+the repository that holds it is a preference.
 
 ### `common/check-changelog.sh`
 

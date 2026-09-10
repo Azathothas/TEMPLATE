@@ -118,7 +118,7 @@ diagnosis before publishing it, in one sentence each.
 
 ## ⚠ It does not exempt itself from the prose rules
 
-The character set, the marker density and the banned vocabulary apply here as
+The character set, the marker density and the writing standard apply here as
 everywhere. `scripts/common/check-markers.sh` reads this directory like any
 other.
 

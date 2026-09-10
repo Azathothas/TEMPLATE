@@ -148,10 +148,11 @@ sh scripts/common/check-twins.sh
 | check | refuses |
 | --- | --- |
 | `check-gate.sh` | ⭐ runs all of the below in one command. A skipped check reads as a skip, never as a pass, and zero passes is red. |
-| `check-docs.sh` | a broken link, a shell block that does not parse, banned vocabulary, a page nothing links to |
+| `check-docs.sh` | a broken link, a shell block that does not parse, a page nothing links to |
 | `check-markers.sh` | ⭐ a character outside the five, in **any** tracked text file, and a page carrying so many markers that none of them are visible |
 | `check-placeholders.sh` | a template placeholder left in a real file |
 | `check-control-bytes.sh` | a literal control byte, which makes a file invisible to `grep` and to `git diff` at once |
+| `check-attribution.sh` | ⭐ a commit that credits a tool. `dotfiles/githooks/commit-msg` refuses one before it exists; this reports the ones that got in. |
 | `check-no-secrets.sh` | a credential or a fingerprint of a private system, in tracked **and** untracked files |
 | `check-twins.sh` | ⭐ the two implementations of a check drifting apart |
 | `check-remote-items.sh` | ⭐ a pull request whose claims do not survive checking |

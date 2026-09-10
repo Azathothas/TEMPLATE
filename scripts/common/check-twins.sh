@@ -293,6 +293,13 @@ compare_pair "check-control-bytes"  check-control-bytes.sh  "--json"          ch
 compare_pair "check-markers"        check-markers.sh        "--json"          check-markers.ps1        "-Json"
 compare_pair "check-one-home"       check-one-home.sh       "--json"          check-one-home.ps1       "-Json"
 compare_pair "check-changelog"      check-changelog.sh      "--json"          check-changelog.ps1      "-Json"
+# ⚠ THE ONLY PAIR WHOSE SUBJECT IS `git log` RATHER THAN THE TREE, so what this
+# comparison proves is narrower than it looks: both halves read the same history
+# and a history with no crediting commit exercises neither half's rules. ⭐ Prove
+# those with a message file, the way scripts/README.md says to. They were, on a
+# trailer, a generated-with line, a bare tool name, a human co-author and a
+# message carrying git's own comment scaffolding.
+compare_pair "check-attribution"    check-attribution.sh    "--json"          check-attribution.ps1    "-Json"
 compare_pair "check-no-secrets"     check-no-secrets.sh     "--json"          check-no-secrets.ps1     "-Json"
 compare_pair "check-no-secrets pub" check-no-secrets.sh     "--public --json" check-no-secrets.ps1     "-Public -Json"
 

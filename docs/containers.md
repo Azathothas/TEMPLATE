@@ -56,6 +56,21 @@ it is a container engine you already have.
 and a container engine solve different problems with different interfaces. Pick
 by what the host has, and say in the write-up which one produced a number.
 
+⭐ **It is two products now, and a caller gets the compiled one by default.**
+Upstream ships a PowerShell script and an executable that carries that same
+script inside itself and adds to it, and its launcher resolves the executable
+first. ⚠ **A page here that names its flags is a page that goes stale without
+anybody editing it**, so this one does not: read the tool's own documentation
+at the link. What matters at this level is that the two exist, that a caller
+can ask for either, and that "the version I ran" is now a question with two
+answers.
+
+⭐ **It also answers whether a machine can run an isolated Linux job at all**,
+in one command, rather than leaving a session to infer it from three.
+[`hosted-sessions.md`](hosted-sessions.md) is why that matters: the commonest
+false claim about a provisioned machine is that it cannot do something whose
+daemon was merely never started.
+
 ---
 
 ## ⛔ Pin it, and verify the bytes before anything executes
@@ -76,10 +91,28 @@ tree.** A repository that stores `.ps1` with CRLF in a checkout and LF in the
 index gives a locally computed digest that disagrees with what the raw endpoint
 serves. It fails closed, which is safe and takes an hour to work out.
 
-⚠ **What a published sums file proves is transport, not authorship.** It ships
-in the same release as the artefact, so whoever could replace one could replace
-the other. A digest the caller holds independently is the check that proves
-authorship, and it applies on top.
+### ⭐ Three tiers, and they answer three different questions
+
+⛔ **They are not stronger and weaker versions of one check.** Each answers a
+question the others cannot, which is why a caller can hold all three at once and
+why dropping one is a decision rather than a simplification.
+
+| what you have | what it proves | what it cannot say |
+| --- | --- | --- |
+| a sums file published with the artefact | ⚠ **transport.** The bytes that arrived are the bytes that were uploaded. | anything about who uploaded them: whoever could replace one file could replace both |
+| ⭐ a digest the caller obtained separately and reviewed | these are the exact bytes somebody looked at | nothing about later releases. It pins one revision, deliberately. |
+| ⭐ a signature verifiable against the publishing workflow's own identity | the artefact was produced by that workflow, which nothing outside it can imitate | that the contents are correct. A signed defect is still a defect. |
+
+⚠ **The third tier costs a network lookup at verify time**, because a keyless
+signature is checked against a public transparency log rather than a key the
+caller holds. An offline verifier cannot use it. That is a real trade and it is
+the reason the other two do not go away.
+
+⚠ **Verification that is optional is verification that has to say what it did.**
+A step that could not check and stayed quiet is indistinguishable from one that
+checked and passed, which is the defect class this whole page is about. Expect
+a tool to report all four outcomes: verified, nothing published to verify
+against, no verifier installed, and failed.
 
 ### ⚠ Four traps in this shape, each paid for
 
@@ -99,6 +132,23 @@ authorship, and it applies on top.
   Bumping a pin is a deliberate act in the consumer's own repository.
 - ⚠ **The pin's owner is not always the tool's owner.** Write down who decides
   when the pin moves, next to the pin.
+- ⭐ **A digest nobody has to paste is a digest nobody pastes wrong.** The
+  version of this shape that a person maintains by hand asks them to copy a
+  forty-character revision and a sixty-four-character digest, and to do it again
+  whenever either moves. Every one of those is a place to paste the wrong
+  string, and a wrong digest fails closed in a way that takes an hour to
+  diagnose. ⚠ A tool that resolves a moving reference to an immutable one
+  **once** and records both in a lock file the project commits keeps the pin
+  rule intact and removes the typing. ⛔ What it must never do is fetch the
+  moving reference itself.
+
+⚠ **A fetch with more than one route is not a weaker fetch.** Where a raw
+endpoint, an API endpoint and a read-only proxy serve the same object, the
+digest check holds whichever answered to the same bytes, so a fallback is the
+same object over another road rather than a lesser copy.
+[`hosted-sessions.md`](hosted-sessions.md) carries the measurement for the
+proxy and the trap in its user-agent handling. ⛔ A route that fired and said
+nothing is a route nobody knows fired: name the host that answered.
 
 ---
 

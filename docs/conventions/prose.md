@@ -233,8 +233,7 @@ check sees:
 3. **No literal control bytes.** Documentation about escape sequences has a
    proven habit of containing the character it is warning about.
 4. **Every relative link resolves**, and every cited path exists.
-5. **None of the banned vocabulary.**
-6. **No page under the docs directory that nothing links to.**
+5. **No page under the docs directory that nothing links to.**
 
 ⚠ **The character rules are checked by a different script, over a wider
 scope.** No em dash, nothing outside the five, and the density ceiling belong
@@ -251,20 +250,51 @@ honest scope.
 
 ---
 
-## Banned vocabulary
+## The register: Simplified Technical English
 
-Words that assert quality instead of demonstrating it. They survive review
-because they feel like description:
+⭐ **Write the way a maintenance manual is written.** The standard is
+**ASD-STE100, Simplified Technical English**: a controlled language written so
+that a procedure means one thing to every reader, including one reading it in a
+second language and one reading it under pressure. What it asks for is what
+this page has been asking for in pieces:
 
-> seamless, blazing, effortless, robust, powerful, cutting-edge,
-> state-of-the-art, world-class, elegant, simply, just, obviously, of course,
-> revolutionary, game-changing, rock-solid, bulletproof, lightning-fast
+| STE asks for | which here means |
+| --- | --- |
+| one word, one meaning | a term is not a synonym for a different term two paragraphs later |
+| short sentences | a rule a reader has to re-read is a rule they will act on wrongly |
+| the active voice, present tense | "the check refuses it", not "it will have been refused" |
+| ⛔ no figurative language | no metaphor doing a technical term's job |
+| a real noun instead of a noun made from a verb | "it fails" beats "a failure occurs" |
 
-⚠ "Simply" and "just" are the two that do real damage. They tell a reader who
-is stuck that the thing they cannot do is easy.
+⛔ **The failure mode here is metaphor used as jargon, not marketing copy.**
+This is worth stating precisely, because the obvious guess is wrong and the
+repository proved it wrong: a list of quality-asserting adjectives was written
+into this page and never enforced. Armed on 2026-09-10 over this tree it found
+**one** hit, `bulletproof`, in a table cell. The same tree writes
+**`load-bearing` twelve times, across ten documents**, as if it were a technical
+term. ⭐ That is the register that actually goes wrong, and no word list holds
+it: the offending words are ordinary until they are asked to carry a meaning
+they do not have.
 
-Replace the adjective with the measurement, or delete it. "Fast" becomes the
-number and its conditions. "Robust" becomes what it survives.
+⚠ **So this rule is a reading, and the linter declines it on purpose.** A guard
+over prose either passes vacuously or refuses legitimate writing.
+[`check-docs.sh`](../../scripts/common/check-docs.sh) says so in its own header
+rather than leaving the next session to rediscover it. ⭐ It is one of the three
+review lenses instead: [`../methodology/reviews.md`](../methodology/reviews.md).
+
+**The two substitutions that do most of the work:**
+
+- **Replace the adjective with the measurement.** "Fast" becomes the number and
+  its conditions. "Robust" becomes what it survives.
+- ⭐ **Replace the metaphor with the mechanism.** "Load-bearing" becomes what
+  breaks when it moves. "Surgical" becomes what it touches and what it does
+  not.
+
+⚠ **`simply`, `just`, `obviously` and `of course` are the words to watch
+hardest**, and they are ordinary English, which is why no check can have them.
+They tell a reader who is stuck that the thing they cannot do is easy. This
+tree uses `just` twenty-two times and almost every one of them means "only",
+which is exactly why matching the word would have been useless.
 
 ---
 

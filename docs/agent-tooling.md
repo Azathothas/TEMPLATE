@@ -37,11 +37,12 @@ judging the tree.
 | --- | --- |
 | [`../scripts/doctor/`](../scripts/doctor/) | the environment probe. What host, what shell, what tools, what the repository is. A probe, not a gate. |
 | [`../scripts/common/check-gate`](../scripts/common/) | runs every check below and prints one verdict |
-| [`../scripts/common/check-docs`](../scripts/common/) | links resolve, fenced blocks parse, banned vocabulary, orphan pages |
+| [`../scripts/common/check-docs`](../scripts/common/) | links resolve, fenced blocks parse, orphan pages |
 | [`../scripts/common/check-markers`](../scripts/common/) | only the five defined characters, and not too many of them |
 | [`../scripts/common/check-one-home`](../scripts/common/) | one fact, one home: no long sentence in two documents |
 | [`../scripts/common/check-placeholders`](../scripts/common/) | did a template placeholder survive into a real file |
 | [`../scripts/common/check-control-bytes`](../scripts/common/) | a literal control byte in a tracked text file |
+| [`../scripts/common/check-attribution`](../scripts/common/) | does any commit credit a tool. [`conventions/git.md`](conventions/git.md) is the rule and the hook that refuses one before it exists. |
 | [`../scripts/common/check-changelog`](../scripts/common/) | the four changelog rules a machine can hold |
 | [`../scripts/common/check-no-secrets`](../scripts/common/) | does anything in the tree carry something that must not be published |
 | [`../scripts/common/check-remote-items`](../scripts/common/) | do the open items against this repository say anything that survives being checked |
@@ -64,7 +65,7 @@ worked shape of a pinned wrapper and what it cost to get right.
 
 | tool | upstream | what it does |
 | --- | --- | --- |
-| `wsl-toolkit` | [`Azathothas/ToolKit`](https://github.com/Azathothas/ToolKit) | creates a throwaway Linux distro on a Windows host, runs a command in it, and destroys it. [`containers.md`](containers.md) is the procedure. |
+| `wsl-toolkit` | [`Azathothas/ToolKit`](https://github.com/Azathothas/ToolKit) | surveys the host, owns one WSL distro with a container engine in it, runs a command in a container or a set of them, and removes what it made. ⭐ Two products, one of them compiled. [`containers.md`](containers.md) is the procedure. |
 | `git-sync` | [`Azathothas/ToolKit`](https://github.com/Azathothas/ToolKit) | commit and push with [`conventions/git.md`](conventions/git.md)'s rules enforced rather than remembered |
 | `fill-license` | [`Azathothas/ToolKit`](https://github.com/Azathothas/ToolKit) | writes a `LICENSE` from a canonical text with the holder filled in, and refuses the ones whose notice is not yours to alter. [`../LICENSES/README.md`](../LICENSES/README.md) says which. |
 | `deslop` | [`Azathothas/ToolKit`](https://github.com/Azathothas/ToolKit) | inventories the files in a tree that address a reader as an agent. [`methodology/lean-adoption.md`](methodology/lean-adoption.md) is the procedure. |

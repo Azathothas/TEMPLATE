@@ -16,6 +16,31 @@ This applies to a commit message, a document, a script, a JSON body, anything
 multi-line, and anything containing an apostrophe, a backtick, a dollar sign or
 a backslash.
 
+### ⭐ The order to reach for, and it is not the order that comes to mind
+
+⛔ **A heredoc is the last resort, not the first, and it is where sessions go
+first anyway.** The pattern is consistent enough to be worth naming: a session
+reaches for `<<'EOF'`, is bitten, reaches for it again with more quoting, is
+bitten again, and eventually writes the file with something else. Every one of
+those attempts costs a turn and some of them corrupt a file quietly.
+
+| reach for | when |
+| --- | --- |
+| ⭐ **whatever writes a file directly for you**, without a shell in the path | ⛔ **always, if you have one.** Nothing quotes, nothing expands, nothing to escape. |
+| a helper built for it, such as `write-file` in [`agent-tooling.md`](../agent-tooling.md) | you are in a shell and the payload is prose, a patch or a substitution |
+| base64 through an argument | the payload has to cross a shell at all |
+| copy from a file that already exists | the content is already on disk |
+| ⚠ a quoted heredoc | ⛔ nothing. See the measurement below, and the one under it. |
+
+⚠ **This is not a style preference and the measurement is two rows down.** A
+quoted heredoc is documented to be literal and was not: the backticks in a
+prose payload were executed.
+
+⭐ **A tool that patches rather than rewrites is worth more than it looks**,
+because the alternative is reading a file, editing it in memory and writing the
+whole thing back, and every one of those steps is a chance to lose the parts
+that were not being changed.
+
 The reason it is a file and not "better quoting" is that quoting is not
 sufficient. Measured on 2026-08-25:
 
@@ -48,7 +73,7 @@ Related failures with the same cause:
   errors, and a regex that was supposed to end in a word boundary now ends in a
   byte no editor shows.
 
-⚠ **Some agent harnesses collapse `\\` to `\` before the shell sees it.** Verify
+⚠ **Some agent tooling collapses `\\` to `\` before the shell sees it.** Verify
 it in the environment you are in rather than assuming either way:
 
 ```bash
@@ -57,6 +82,16 @@ printf 'literal: C:\\Users and regex \\d+\n'
 
 If the output shows one backslash where you wrote two, every literal double
 backslash has to go through a file-writing tool instead.
+
+⛔ **This probe fired here, mid-session, and it had already cost two edits.**
+Measured on one Windows 11 machine (10.0.26200) on 2026-09-10, from a session
+whose commands reach `bash` as written text: the line above answered
+`printf: missing unicode digit for \U`, which is `printf` receiving `\U` where
+`\\U` was written. The two edits before it were patch scripts whose search
+strings contained `\\n`; the collapse turned each into a real newline, so both
+matched nothing and **reported no error**, because a replace that finds nothing
+is not a failure to any of the tools involved. ⭐ The visible symptom was a file
+that had not changed, which is the same symptom as a file that did not need to.
 
 ### ⭐ The channel that cannot be reached into: base64
 
@@ -69,7 +104,7 @@ That makes it the right transport for a helper that writes files:
 
 | channel | when |
 | --- | --- |
-| ⭐ **base64 argument** | anything with quoting hazards. The bulletproof one. |
+| ⭐ **base64 argument** | anything with quoting hazards. Nothing in it is a character a shell acts on. |
 | **copy from another file** | the payload already exists on disk |
 | **stdin** | ⚠ only behind a pipe, and only from a POSIX shell. See below. |
 
@@ -324,6 +359,29 @@ rather than warns, over every tracked text file.
 
 ## 8. PowerShell specifics
 
+- ⛔ **Every invocation carries `-NoProfile`, and this repository never said
+  why.** It appears in every example here and in no explanation, which is how a
+  convention becomes something a session drops the first time it types a
+  command from memory. Without it PowerShell runs the profile scripts of
+  whoever owns the machine first: they set variables, define functions, change
+  the working directory, install argument completers, alias native commands and
+  write to stdout. ⭐ **A profile that prints one line puts that line in front
+  of your JSON**, and a check that parses its own output then fails on a
+  machine that is not yours, for a reason nothing in the repository names.
+  ⚠ It also costs startup time on every call, which a gate pays once per check.
+
+  ```bash
+  pwsh -NoProfile -File scripts/common/check-gate.ps1
+  ```
+
+  ⚠ **The POSIX-side counterpart is not a flag, it is two variables**, and
+  section 7 carries it: a Git Bash command whose arguments are destined for a
+  non-Windows process sets `MSYS_NO_PATHCONV` and `MSYS2_ARG_CONV_EXCL`. The
+  two rules pair up because both stop somebody else's environment rewriting
+  what you sent.
+
+  ⭐ **It is checked now.** `check-docs` refuses a fenced block that invokes
+  `pwsh` or `powershell` without it, so an example cannot ship without one.
 - ⛔ **`[int]` on a double rounds.** `[int](2.65)` is 3, so a 2h39m session
   prints as 3h39m and the number goes straight into a report. Use
   `[math]::Floor`.
@@ -385,10 +443,10 @@ a different field.
 ⚠ **Do not end a turn to wait for something.** The conversation idles, the
 harness times out, and the session dies mid-operation with state half-changed.
 
-⛔ **And do not reach for the harness's own scheduler, monitor or wake-up tool
-to do the waiting.** They end the turn by design: they work by giving control
-back and being re-invoked later. Substituting one is not holding, it is the
-thing this section forbids, wearing a different name.
+⛔ **And a scheduler, a monitor or a wake-up facility does not do the waiting
+either.** Each of them ends the turn by design: they work by giving control back
+and being re-invoked later. Substituting one is not holding, it is the thing
+this section forbids, wearing a different name.
 
 ⚠ **This is the rule agents break most, and the reason is specific.** Many
 harnesses block a foreground `sleep`. A session that has learned "hold with a
@@ -511,4 +569,4 @@ forty-five-minute wait.
 | the job is backgrounded | `tail -f --pid=$JOB` on its log, then `wait` |
 | the job is silent | make the job print, then as above |
 | ⚠ waiting on something off this machine | a bounded timer loop, from the table |
-| ⛔ any of the above | never a harness scheduler, monitor or wake-up |
+| ⛔ any of the above | never a scheduler, a monitor or a wake-up facility |

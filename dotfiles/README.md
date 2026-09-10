@@ -48,6 +48,7 @@ cat dotfiles/common/gitignore dotfiles/os-editor/gitignore dotfiles/node/gitigno
 | `common/gitattributes` | always. Line endings and binary declarations. |
 | `common/editorconfig` | always. The working-tree half of gitattributes. |
 | `github/` | when the remote is GitHub and CI was chosen |
+| ⭐ `githooks/` | always. One command installs it, and until it is run there is no hook. |
 
 ### What is in `github/`
 
@@ -73,6 +74,42 @@ reads, until the day it does not.
 ```bash
 gh api repos/actions/checkout/git/ref/tags/v5 --jq .object.sha
 ```
+
+### What is in `githooks/`
+
+⛔ **A hook is the only thing here that does nothing until somebody runs a
+command.** Git does not clone hooks, and it does not read them from a tracked
+directory on its own, so this directory is inert until:
+
+```bash
+git config core.hooksPath dotfiles/githooks
+```
+
+⚠ **A project that copies the directory elsewhere points at its own copy.**
+`.githooks` is the usual name. `check-attribution` prints whichever of the two
+is actually in the tree, so the instruction a reader gets is one that works
+where they are.
+
+| file | what it refuses |
+| --- | --- |
+| ⭐ [`githooks/commit-msg`](githooks/commit-msg) | a commit message that credits a tool, before the commit exists. [`../docs/conventions/git.md`](../docs/conventions/git.md) is the rule. |
+
+⚠ **It goes in with LF endings**, like every other script here. A hook that
+reaches a Windows checkout with carriage returns fails with an error naming the
+interpreter rather than the line ending, which is a long way from the cause.
+
+⛔ **And it is the one file in this repository tracked as executable.** git runs
+a hook directly rather than handing it to an interpreter, so without the bit it
+is skipped in silence on any POSIX host. Everything else here is invoked as
+`sh script.sh` and is mode 644 on purpose. ⚠ The bit lives in the index, not on
+disk, because a Windows checkout does not carry one:
+
+```bash
+git ls-files -s dotfiles/githooks/commit-msg
+```
+
+⭐ `check-attribution` reports it, because this file committed as 644 the first
+time and nothing said so.
 
 ⚠ A project can be several ecosystems at once. The probe reports what the tree
 declares:

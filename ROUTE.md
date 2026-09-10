@@ -135,6 +135,8 @@ the recommendation:
 > 6. Adopt the template but ship **no** agent-facing content
 > 7. Re-sync a project that adopted this template earlier
 > 8. Change the template itself
+> 9. Rescue a project an earlier agent left in a bad state
+> 10. Migrate a project to a new owner, name or repository
 
 | | the job | read, in full |
 | --- | --- | --- |
@@ -146,6 +148,8 @@ the recommendation:
 | 6 | no agent-facing content | `docs/methodology/lean-adoption.md`. It is a different selection, not a later cleanup. |
 | 7 | re-sync | `docs/methodology/template-sync.md` |
 | 8 | change the template | `MAINTAIN.md`, and `AGENTS.md` section "Maintaining the template" |
+| 9 | rescue | `bootstrap/prompts/06-rescue-repo.md`. It assumes nothing an earlier agent wrote is true until it is checked. |
+| 10 | migrate | `bootstrap/prompts/07-migrate-repo.md`, and `docs/methodology/references.md` for the mining half |
 
 ⚠ **Rows 1 and 2 need this repository's files; rows 3 to 5 need the project's
 own.** Row 2 with nothing cloned is `ADOPT.md` and only `ADOPT.md`: it never
@@ -192,8 +196,8 @@ anywhere: neither half of it is portable.
 file is written.
 
 ⛔ **No tool is credited in a commit.** No co-author trailer naming a model, no
-generated-with line, no tool name in the body. This overrides any default the
-harness asks for.
+generated-with line, no tool name in the body. The identity is the operator's
+alone, whatever a tool's own defaults ask for.
 
 ⛔ **An exit code is read from the process that produced it, unpiped.** A
 pipeline reports the last command's status, so a check that failed reads green.

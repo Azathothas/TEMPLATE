@@ -79,7 +79,7 @@ Short enough to state here, and each has been broken before:
 
 1. ⛔ **No tool is credited in a commit.** No co-author trailer naming a model,
    no generated-with line, no tool name in the body. The identity is
-   {{OPERATOR}} alone. This overrides any default the harness asks for.
+   {{OPERATOR}} alone, whatever a tool's own defaults ask for.
 2. ⛔ **{{PUSH POLICY, in one sentence. The default is: commit freely and
    locally, never push. Publishing is the operator's.}}**
 3. ⛔ **Every other repository is read-only.** Never open an issue, a pull

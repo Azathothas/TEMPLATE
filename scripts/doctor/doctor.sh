@@ -329,6 +329,7 @@ done
 
 IS_GIT=0; GIT_ROOT=""; GIT_BRANCH=""; GIT_REMOTE=""; GIT_DIRTY=0
 GIT_COMMITS=0; HAS_CODEGRAPH=0; REMOTE_IS_TEMPLATE=0
+GIT_SHALLOW=0; GIT_IDENT=""; GIT_HOOKS=""
 if command -v git >/dev/null 2>&1; then
   if GIT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null); then
     IS_GIT=1
@@ -339,6 +340,18 @@ if command -v git >/dev/null 2>&1; then
     case "$GIT_REMOTE" in
       *[Tt][Ee][Mm][Pp][Ll][Aa][Tt][Ee]*) REMOTE_IS_TEMPLATE=1 ;;
     esac
+    # ⚠ A SHALLOW CLONE ANSWERS EVERY QUESTION AND ANSWERS SOME OF THEM WRONG.
+    # `git log` works, `git describe` works, and a merge base against a branch
+    # whose commits were never fetched cannot be computed, with an error that
+    # names the commit rather than the depth. A machine somebody else
+    # provisioned usually hands one over. docs/hosted-sessions.md.
+    [ "$(git rev-parse --is-shallow-repository 2>/dev/null)" = "true" ] && GIT_SHALLOW=1
+    # ⚠ AN UNSET IDENTITY IS NOT VISIBLE UNTIL THE FIRST COMMIT, and a wrong
+    # author is not something a later commit can correct.
+    _gn=$(git config user.name 2>/dev/null || printf '')
+    _ge=$(git config user.email 2>/dev/null || printf '')
+    [ -n "$_gn" ] && [ -n "$_ge" ] && GIT_IDENT="$_gn <$_ge>"
+    GIT_HOOKS=$(git config core.hooksPath 2>/dev/null || printf '')
   fi
 fi
 [ -d .codegraph ] && HAS_CODEGRAPH=1
@@ -568,6 +581,8 @@ if [ "$MODE" = json ]; then
   esc "$GIT_ROOT";    E_ROOT="$ESC"
   esc "$GIT_BRANCH";  E_BRANCH="$ESC"
   esc "$GIT_REMOTE";  E_REMOTE="$ESC"
+  esc "$GIT_IDENT";   E_IDENT="$ESC"
+  esc "$GIT_HOOKS";   E_HOOKS="$ESC"
 
   cat <<JSONEOF
 {
@@ -594,6 +609,9 @@ if [ "$MODE" = json ]; then
     "remote": "$E_REMOTE",
     "dirty": $(jbool "$GIT_DIRTY"),
     "commits": ${GIT_COMMITS:-0},
+    "shallow": $(jbool "$GIT_SHALLOW"),
+    "identity": "$E_IDENT",
+    "hooks_path": "$E_HOOKS",
     "remote_looks_like_template": $(jbool "$REMOTE_IS_TEMPLATE"),
     "has_codegraph": $(jbool "$HAS_CODEGRAPH"),
     "ecosystems": [$ECO_JSON]
@@ -623,9 +641,14 @@ printf '  writable tmp  %s\n' "${TMPDIR_OK:-NONE}"
 printf '\nREPO\n'
 if [ "$IS_GIT" = 1 ]; then
   printf '  git root      %s\n' "$GIT_ROOT"
-  printf '  branch        %s (%s commits)\n' "${GIT_BRANCH:-none}" "$GIT_COMMITS"
+  printf '  branch        %s (%s commits%s)\n' "${GIT_BRANCH:-none}" "$GIT_COMMITS" \
+    "$(if [ "$GIT_SHALLOW" = 1 ]; then echo ', SHALLOW'; fi)"
   printf '  origin        %s\n' "${GIT_REMOTE:-none}"
   printf '  tree          %s\n' "$(if [ "$GIT_DIRTY" = 1 ]; then echo dirty; else echo clean; fi)"
+  printf '  identity      %s\n' "${GIT_IDENT:-NOT SET}"
+  printf '  hooks path    %s\n' "${GIT_HOOKS:-not set}"
+  [ "$GIT_SHALLOW" = 1 ] && printf '  %s the clone is shallow. A merge base against an unfetched commit cannot be computed.\n' "$(printf '\342\232\240')"
+  [ -z "$GIT_IDENT" ] && printf '  %s no commit identity is configured here. Set it before the first commit.\n' "$(printf '\342\232\240')"
   [ "$REMOTE_IS_TEMPLATE" = 1 ] && printf '  %s origin still points at a template remote. Detach before committing project work.\n' "$(printf '\342\232\240')"
 else
   printf '  not a git repository\n'

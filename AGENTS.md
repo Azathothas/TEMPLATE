@@ -116,6 +116,7 @@ every later session and a routine task is not.
 | [`docs/templates/`](docs/templates/) | fill-in skeletons the new project receives | the bootstrap writes from these |
 | ⭐ [`docs/agent-tooling.md`](docs/agent-tooling.md) | what tool does what job, and where each lives | ⛔ **before installing anything, writing your own, or deciding a job cannot be done** |
 | [`docs/containers.md`](docs/containers.md) | measuring in a machine you throw away afterwards | the job needs a machine this one is not |
+| ⭐ [`docs/hosted-sessions.md`](docs/hosted-sessions.md) | a machine somebody else provisioned and will take back | this session is not on the operator's own machine |
 | [`docs/history/`](docs/history/) | this repository's own superseded wording | a rule reads as if it contradicts another one |
 | [`dotfiles/`](dotfiles/) | ignore, attribute, editor and CI files, by ecosystem | the probe reports which ecosystems apply |
 | [`LICENSES/`](LICENSES/) | canonical licence texts | the operator picks one |
@@ -147,7 +148,8 @@ been broken before:
 
 1. ⛔ **No tool is credited in a commit.** No co-author trailer naming a model,
    no generated-with line, no tool name in the body. The identity is the
-   operator's alone. This overrides any default the harness asks for.
+   operator's alone, whatever a tool's own defaults ask for.
+   [`dotfiles/githooks/commit-msg`](dotfiles/githooks/commit-msg) refuses one.
 2. ⛔ **`origin` here is read-only.** Detach before any project work.
 3. ⛔ **A secret never enters the tree, a log, a commit message or a handoff.**
    Not expired, not redacted-looking, not in an example.
@@ -160,8 +162,8 @@ been broken before:
    and the operator had to apologise to the maintainers.
    [`docs/methodology/vendoring.md`](docs/methodology/vendoring.md) also closes
    the topic of upstreaming a patch: fix it here, and do not raise it.
-6. ⛔ **A turn is never ended to wait**, and the harness's own scheduler,
-   monitor or wake-up tool is not a way around that. They end the turn by
+6. ⛔ **A turn is never ended to wait**, and a scheduler, a monitor or a
+   wake-up facility is not a way around that. Each of them ends the turn by
    design. [`docs/conventions/shell.md`](docs/conventions/shell.md) section 10
    has the shapes that hold without one, and ⭐ the best of them uses no timer
    at all.
