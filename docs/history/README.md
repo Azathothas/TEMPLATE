@@ -25,6 +25,7 @@ life with a record of decisions that were never its own.
 | [`prose-register.md`](prose-register.md) | the prohibition-first opening of the prose rules, and what banning a character taught agents to do instead |
 | [`research-merge.md`](research-merge.md) | why studying somebody else's code and taking your own measurements were two documents, and what merging them cost |
 | [`system-prompt-sweep.md`](system-prompt-sweep.md) | what was read before `prompts/SYSTEM.md` was written, the measurement that refuted half of one reference, and the instrument that took it |
+| [`system-prompt-permissions-narrowing.md`](system-prompt-permissions-narrowing.md) | what the reopen of issue 20 withdrew from the prompt: the ask-first, narrowing, and recap wording that nagged, gave up, and finished early |
 
 ---
 
