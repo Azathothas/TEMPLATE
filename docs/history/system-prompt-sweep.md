@@ -11,10 +11,22 @@ Read this before the findings, not after.
 
 - **The corpus was indexed in full and read in part.** Its whole file list was
   taken: **493 files, 16.9 MB, across 22 top-level directories**, of which
-  Anthropic is 311 files and OpenAI 87. Thirteen of the coding-agent prompts
-  were fetched, four were read end to end, and the rest were searched by theme.
-  ⛔ **Nothing outside the coding-agent subset was read at all**, which leaves
-  the image, search, voice and consumer-assistant prompts untouched.
+  Anthropic is 311 files and OpenAI 87. Thirteen coding-agent prompts and
+  thirteen review, verification and research documents were fetched; **six were
+  read end to end, two in part, and the rest searched by theme.** ⚠ The count
+  was wrong in a draft of this page, which claimed eight read in full. The claim
+  audit that caught it also sent the reader back to the part of the audit
+  document that had been skipped, and that part produced the section below.
+  ⛔ **Nothing outside those two subsets was read at all**, which leaves the
+  image, search, voice and consumer-assistant prompts untouched, along with the
+  four large `thinking` prompts and every `.mjs`, `.js` and `.d.ts` file.
+- ⚠ **The most useful cluster was found on the third pass, not the first.**
+  Under `claude-code/skills/` there are graded review tiers, a verification
+  skill and a prompt audit, and they carry more of the discipline this prompt
+  needed than any of the agent prompts do. Two passes over the same index
+  missed them because the search was for prompts rather than for the subject.
+  ⭐ **The lesson is the one the prompt now states**: a pattern match locates,
+  and searching for the wrong noun finds nothing while looking thorough.
 - ⚠ **A first pass over eight files was thrown away and redone.** It measured
   where directives sit and stopped, which is a structural fact about the text
   rather than a study of what the text asks an agent to do. The operator
@@ -41,7 +53,7 @@ Read this before the findings, not after.
 
 | what | at | read |
 | --- | --- | --- |
-| `asgeirtj/system_prompts_leaks` | `c7b2c31df51e` | 2026-09-18, eight files, listed below |
+| `asgeirtj/system_prompts_leaks` | `c7b2c31df51e` | 2026-09-18, in three passes: eight prompts measured, four read end to end, then the review, verification and audit cluster under `claude-code/skills/` |
 | `can1357/oh-my-pi`, the system-prompts skill | `c101452bb5a6` | 2026-09-18, in full |
 | `earendil-works/pi`, the deslop prompt | `5009d0608c26` | 2026-09-18, in full |
 
@@ -128,7 +140,7 @@ section 3.5 of [`../methodology/research.md`](../methodology/research.md) is why
 | forbid explaining WHY something was declined, on the grounds that it reads as preachy | section 6 |
 | refuse a check built from the assumption under test, and require an independent oracle | section 2 |
 | forbid re-running a refused check with the guard skipped, forced or disabled | section 4 |
-| treat something else found broken as a FINDING for the report rather than as new work | section 12 |
+| treat something else found broken as a FINDING for the report rather than as new work | section 13 |
 | ⭐ treat the request as an exhaustive checklist, giving error and edge clauses the weight of the happy path | section 1 |
 | forbid narrowing a failing test run until it passes | section 9 |
 | forbid marking work complete because a budget is nearly spent | section 6 |
@@ -138,6 +150,52 @@ section 3.5 of [`../methodology/research.md`](../methodology/research.md) is why
 | keep an operator correction active until they lift it | section 1 |
 | calibrate explanation depth to the reader without announcing it | section 7 |
 | adapt immediately and without defensiveness when redirected | section 7 |
+
+### ⭐ The third pass: how a conclusion is reached
+
+⛔ **This is where the operator said the prompt was weakest, and the corpus
+agreed.** Every row below comes from the review, verification and audit
+documents rather than from an agent prompt.
+
+| what the corpus does | where it landed |
+| --- | --- |
+| ⭐ run many independent finder angles, and forbid one angle's conclusion from suppressing another's | section 2, rule 3 |
+| grade a review by effort, and at the highest grade prefer recall to precision because a missed defect ships | section 12 |
+| after verifying, run one more finder whose only job is what the list does not already hold | section 2, rule 5 |
+| give every candidate one of three verdicts, each requiring the line quoted | section 2 |
+| name the invariant every deleted line enforced, then find where it is re-established | section 9 |
+| ⭐ treat a removal as a hypothesis rather than a conclusion, and probe behaviour rather than self-report | section 2 |
+| change one thing at a time where stakes are high, so a regression attributes | section 9 |
+| refuse a partial pass: three of four is a failure until the fourth is explained | section 12 |
+| report the worse verdict when evidence is ambiguous, and attach the raw output | section 12 |
+| treat captured output as evidence and memory of it as not | section 12 |
+| ⭐ say that confirming the claim is step one and the value is what the author did not know | section 2 |
+| refuse to count relaying somebody else's finding as an observation | section 12 |
+| ⛔ an audit that finds nothing changes nothing: an empty result beats a manufactured one | section 2 |
+| give a reader more context than seems necessary, because a short prompt is filled in with safe defaults | the length of this prompt |
+
+⚠ **One of those rows corrected something this repository already said.**
+`reviews.md` has long held that a pass reporting nothing was too shallow. The
+audit document holds the opposite pressure: a clean surface is a valid outcome
+and an invented finding is worse than none. ⭐ Both are true and the
+reconciliation is the sentence that was missing from both: a pass that found
+nothing states what would have made it fire. Both pages now carry it.
+
+### ⚠ The audit document was turned on this prompt, and it landed one hit
+
+⛔ **One of the references is a procedure for auditing a prompt, so it was run
+against `SYSTEM.md` rather than only read.** Three of its findings, and what
+was done with each:
+
+| its finding | verdict here |
+| --- | --- |
+| ⛔ **suppressing narration backfires**: rules like "do not narrate" and "hold findings for the end" were written against models that over-narrated, and current ones under-narrate when the rule is present | **accepted and fixed.** Section 6 forbade a preamble and a closing summary, which is that shape. It now distinguishes an empty announcement from a line carrying a fact, and requires the second. |
+| a prohibition against a failure the model was not going to make can anchor it toward that failure, so keep only prohibitions whose failure reproduces | **kept, with the reason.** Every row of section 6 is a failure this operator has observed, which is the test the document itself sets. |
+| ⚠ bullets and tables flatten priority and sever a rule from its reason, and a prompt's format bleeds into the output's format | ⚠ **recorded, not acted on.** It is one document's position, and the measured corpus cuts the other way: the largest shipped prompts here use tables heavily. Reformatting a prompt on a contested reading is the kind of change this repository asks somebody to measure first. ⛔ Left as an open question rather than a silent decision. |
+
+⭐ **That third row is the honest half of the audit.** A reference that contradicts
+a measurement is not automatically right, and recording the disagreement is
+worth more than resolving it by preference.
 
 ⚠ **Two things the corpus does NOT support, and they were left out.** Nothing
 read here tells an agent to perform enthusiasm, and nothing read here asks for a

@@ -94,6 +94,55 @@ Every research unit answers all three or says which it could not reach.
 removed.** The implementing session then meets it first, with no budget for it
 and a plan built on the assumption it was not there.
 
+### ⛔ The first explanation that fits is the one to distrust
+
+**It fits because you stopped looking.** Nothing else follows from its fitting.
+
+⛔ **What this cost. Reported by this repository's operator on 2026-09-18,
+from a pair of real runs; not measured here.** Two agents were given one
+instruction, word for word: review a port in depth, read every line, do not
+skim. The first finished sooner, spent a third of the tokens, and produced the
+more convincing write-up. It had formed one hypothesis, found evidence that fit
+it, and stopped. The second formed the same hypothesis first, then carried on
+through the rest, and only there found the true cause, which was not obvious.
+⭐ **The faster, cheaper, more confident answer was the wrong one**, and nothing
+in its output said so.
+
+⚠ **A second pair, reported the same day, failed the same way through a
+different door.** Asked which of two outputs was machine-generated filler, the first agent
+counted surface markers and punctuation, flagged genuine human sentences, and
+cleared a fabricated paragraph. It never opened the claims to test them. ⛔ **A
+pattern match locates. It never concludes.**
+
+So the procedure, and it is not optional past the point where a conclusion gets
+published:
+
+1. ⭐ **Enumerate at least three candidate explanations before testing any of
+   them**, and write them down. One candidate means you have not read enough of
+   the system yet.
+2. **Test to refute.** Ask what you would see if a candidate were false, then
+   go and look for that. Evidence collected to support a hypothesis is not
+   evidence.
+3. ⛔ **Do not let one line of inquiry suppress another.** Two candidates
+   implicating the same line for different reasons are two candidates. Dropping
+   the second because the first already explains it is exactly how the
+   non-obvious cause survives.
+4. **Give every candidate one of three verdicts**, never two: confirmed, with
+   the trigger named and the line quoted; plausible, with what would settle it;
+   refuted, with the line that disproves it.
+5. ⭐ **Then read it again, as somebody who already holds your list and is
+   looking only for what is not on it.** Re-deriving what you already have is
+   not this pass. Finding nothing here is a result.
+
+⚠ **Speed, token count and confidence are not quality signals, and two of them
+run the wrong way.** A shorter, faster, more fluent answer is what stopping
+early produces. ⭐ Where a conclusion matters, the honest measure is coverage:
+what was read, what was run, what was left.
+
+⛔ **And do not manufacture a finding to prove you looked.** An empty result
+beats an invented one. A pass that found nothing says what it swept and what
+would have made it fire, which is the sentence that tells the two apart.
+
 ---
 
 ## 3. Studying somebody else's project
