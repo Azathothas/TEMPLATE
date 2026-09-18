@@ -10,7 +10,7 @@ than believed, and what this sweep did not establish. 2026-09-18.
 Read this before the findings, not after.
 
 - **The corpus was indexed in full and read in part.** Its whole file list was
-  taken: **493 files, 16.9 MB, across 22 top-level directories**, of which
+  taken: **493 files, 16,918,725 bytes, across 22 top-level directories**, of which
   Anthropic is 311 files and OpenAI 87. Thirteen coding-agent prompts and
   thirteen review, verification and research documents were fetched; **six were
   read end to end, two in part, and the rest searched by theme.** ⚠ The count

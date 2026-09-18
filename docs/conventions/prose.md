@@ -86,10 +86,16 @@ than a judgement.
 
 ⚠ **Rule 11 is a reading here, and the number is why.** Measured over this
 tree's markdown prose on 2026-09-18, on one Windows 11 Pro 10.0.26200 machine:
-**628 of 4182 sentences, 15.0%, run past 25 words**. ⭐ That figure is an upper
-bound rather than a count. The instrument splits on sentence punctuation, so a
-bulleted list whose items carry no full stop is measured as one long sentence,
-and the longest results it reported are all that shape. ⛔ **Arming a ceiling on
+**about 15% of sentences run past 25 words**.
+
+⚠ **The ratio is quoted and the raw counts are not.** The tree grew while the
+measurement was being written up, so a count taken before publishing is wrong
+by the time anybody re-runs it. The ratio held across that growth.
+
+⭐ **Treat even the ratio as an upper bound.** The instrument splits on
+sentence punctuation, so a bulleted list whose items carry no full stop is
+measured as one long sentence, and every one of the longest results it reported
+was that shape rather than a real sentence. ⛔ **Arming a ceiling on
 an instrument that cannot tell a list from a sentence would refuse correct
 writing on its first run**, which is the failure mode that gets a check switched
 off within a week. The rule stays, the number stays with its conditions, and a
