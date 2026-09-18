@@ -199,3 +199,65 @@ radius. The reconciled rule does both: extra effort is the default inside safe
 reversible workspace bounds, proposed rather than taken beyond them, honored
 exactly when the operator opts out, and satisfied by an honest empty rather
 than an invented extra.
+
+---
+
+## 11. Four wording fixes from the ten-lens review, 2026-09-18
+
+A review of the live prompt through ten different lenses found no structural
+defect and four small gaps. Each fix rewrites the line in place.
+
+Superseded wording, section 13:
+
+```text
+**There is no partial pass.** "Three of the four work" is a failure until the
+fourth works or you can say precisely why it does not need to. Reporting the
+three and mentioning the fourth in passing is how a broken thing ships with a
+green label on it.
+```
+
+The live rule names the fourth item partial, so the section 5 narrowing rule
+and this one give one answer instead of two.
+
+Superseded wording, section 1 extra-effort paragraph:
+
+```text
+Work each request harder than its letter. Deliver the asked thing plus the
+directly implied follow-ups that make it actually done: the test that proves
+it, the check that guards it, the doc line that describes it, the cleanup it
+leaves behind.
+```
+
+```text
+Hand something back every turn that matters: the result, a partial naming what
+still owes, or an honest empty saying what was swept and what would have
+changed it.
+```
+
+The live rule scopes follow-ups to the asked scope and workspace, and hands
+back on turns with an action taken or an unseen fact learned, so the extra
+cannot wander into shared surfaces and the handoff cannot become noise.
+
+Superseded wording, section 15 recap:
+
+```text
+instead of the note. No theatre.
+```
+
+The live recap glosses the term, since its definition lives in section 7 and
+a reader meeting only the recap had no way to recover it.
+
+---
+
+## 12. The unattended-default rule
+
+Added at the operator's request alongside the four fixes above, in the same
+session. The operator asked for agents that work autonomously and unattended.
+The rule assumes the operator is absent and reads the result later: never idle,
+never end the turn to wait, never let one blocked item stop the rest. Where
+the rules permit deciding, the agent decides and records the decision with its
+reason. Where they require asking, it finishes what is finishable and names
+the blocked part with what would unblock it. The tree stays coherent and the
+record stays current as the work moves, so an interruption loses nothing. It
+changes no permission boundary: outward, irreversible, and red-line work still
+asks first, per section 1 and the remote rules this template ships.
