@@ -21,8 +21,7 @@ rule: these summaries exist to route, not to substitute.
 | [`choosing-a-work-model.md`](methodology/choosing-a-work-model.md) | stage or todo, and the migration between them. Deleted once chosen. |
 | [`work-stages.md`](methodology/work-stages.md) | the stage model: numbered units, a plan each, a handoff each. |
 | [`work-todo.md`](methodology/work-todo.md) | the todo model: an index, a record, entries that close in place. |
-| [`references.md`](methodology/references.md) | how to study somebody else's project, including the two steps that always get skipped. |
-| [`experiments.md`](methodology/experiments.md) | taking your own measurements: the script, the conditions, and why a negative result is committed. |
+| ⭐ [`research.md`](methodology/research.md) | the whole of finding something out, in one document a session can be handed alone: the boundary, studying somebody else's project, taking your own measurements, the proof of concept, and when to stop. |
 | ⭐ [`vendoring.md`](methodology/vendoring.md) | third-party code in this tree. ⛔ Patch it here; upstreaming is not a topic. |
 | ⭐ [`history.md`](methodology/history.md) | where the story goes, so it stops being written into the pages that answer questions. |
 | [`template-sync.md`](methodology/template-sync.md) | taking a later version of the template into a project that adopted it already. |
@@ -32,12 +31,18 @@ rule: these summaries exist to route, not to substitute.
 
 | file | answers |
 | --- | --- |
-| [`prose.md`](conventions/prose.md) | how documents are written. The three markers, and why amendments are made in place. |
+| [`prose.md`](conventions/prose.md) | the register everything here is written in, and it is a published standard rather than a house style. The three markers, the dash rule, and why amendments are made in place. |
 | [`docs.md`](conventions/docs.md) | the document set, one fact one home, and the changelog rules. |
 | [`git.md`](conventions/git.md) | commit identity, what may reach a remote, what is never committed. |
 | [`code.md`](conventions/code.md) | one read path one write path, build to last, and the testing tiers. |
 | ⭐ [`forbidden-patterns.md`](conventions/forbidden-patterns.md) | the table to grep yourself against before declaring a gate green. |
 | ⭐ [`shell.md`](conventions/shell.md) | quoting, heredocs, exit codes, streams, line endings, and the platform traps. |
+
+## prompts: what an agent is given before it reads anything here
+
+| file | answers |
+| --- | --- |
+| ⭐ [`SYSTEM.md`](../prompts/SYSTEM.md) | the system prompt. How to reconcile with a prompt already in place, what counts as knowing something, when the word cannot may be written, and what not to emit. It carries no links, because an agent reading it may not be able to reach this tree. |
 
 ⚠ The entry points that live at the repository root rather than under `docs/`:
 ⭐ [`ROUTE.md`](../ROUTE.md), the one paste that works out which job a session

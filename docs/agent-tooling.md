@@ -38,7 +38,7 @@ judging the tree.
 | [`../scripts/doctor/`](../scripts/doctor/) | the environment probe. What host, what shell, what tools, what the repository is. A probe, not a gate. |
 | [`../scripts/common/check-gate`](../scripts/common/) | runs every check below and prints one verdict |
 | [`../scripts/common/check-docs`](../scripts/common/) | links resolve, fenced blocks parse, orphan pages |
-| [`../scripts/common/check-markers`](../scripts/common/) | only the five defined characters, and not too many of them |
+| [`../scripts/common/check-markers`](../scripts/common/) | only the five defined characters, not too many of them, no dash respelt in hyphens, and no unclosed fence |
 | [`../scripts/common/check-one-home`](../scripts/common/) | one fact, one home: no long sentence in two documents |
 | [`../scripts/common/check-placeholders`](../scripts/common/) | did a template placeholder survive into a real file |
 | [`../scripts/common/check-control-bytes`](../scripts/common/) | a literal control byte in a tracked text file |
@@ -47,29 +47,40 @@ judging the tree.
 | [`../scripts/common/check-no-secrets`](../scripts/common/) | does anything in the tree carry something that must not be published |
 | [`../scripts/common/check-remote-items`](../scripts/common/) | do the open items against this repository say anything that survives being checked |
 | [`../scripts/common/check-twins`](../scripts/common/) | do both halves of every pair still answer the same way |
-| ⭐ [`../scripts/common/mine-repo`](../scripts/common/) | fetch everything a reference sweep needs, and keep it. [`methodology/references.md`](methodology/references.md) is the procedure. |
+| ⭐ [`../scripts/common/mine-repo`](../scripts/common/) | fetch everything a reference sweep needs, and keep it. [`methodology/research.md`](methodology/research.md) section 3 is the procedure. |
 
 ---
 
 ## What lives upstream
 
-⛔ **These were here and were removed.** A tool kept in two repositories
-acquires two sets of defects, and one of the two never gets fixed. Two of the
-four below were carrying a defect their upstream had already fixed on the day
-they left. [`history/twins-and-scripts.md`](history/twins-and-scripts.md) has
-the comparison, including the two that had not drifted.
+⛔ **Most of these were here and were removed.** A tool kept in two
+repositories acquires two sets of defects, and one of the two never gets fixed.
+Four left together, and two of the four were carrying a defect their upstream
+had already fixed on the day they went.
+[`history/twins-and-scripts.md`](history/twins-and-scripts.md) has the
+comparison, including the two that had not drifted.
 
 ⚠ **Fetch by a pinned commit or a release tag, never a branch.** A moving
 reference runs code nobody reviewed. [`containers.md`](containers.md) has the
 worked shape of a pinned wrapper and what it cost to get right.
 
+⛔ **Where a row links a skill, read the skill and not this row.** Upstream
+writes one self-contained page per product and generates it against the
+executable's own manual, so it is current in a way no summary here can be. What
+this repository wrote instead was a product shape that upstream later deleted,
+and the correction arrived from upstream's consumer register rather than from
+anybody here. [`history/upstream-tool-shape.md`](history/upstream-tool-shape.md)
+keeps the retired rows and says why that class of sentence cannot be caught
+locally.
+
 | tool | upstream | what it does |
 | --- | --- | --- |
-| `wsl-toolkit` | [`Azathothas/ToolKit`](https://github.com/Azathothas/ToolKit) | surveys the host, owns one WSL distro with a container engine in it, runs a command in a container or a set of them, and removes what it made. ⭐ Two products, one of them compiled. [`containers.md`](containers.md) is the procedure. |
+| `wsl-toolkit` | [`Azathothas/ToolKit`](https://github.com/Azathothas/ToolKit) | surveys the host, owns one WSL distro with a container engine in it, runs a command in a container or a set of them, and removes what it made. [`containers.md`](containers.md) is the procedure; the [skill](https://github.com/Azathothas/ToolKit/blob/main/skills/wsl-toolkit/SKILL.md) is how to drive it. |
+| `wsl-toolkit-agents` | [`Azathothas/ToolKit`](https://github.com/Azathothas/ToolKit) | runs a coding agent inside a base and reads back what model and effort it really started on. A [skill](https://github.com/Azathothas/ToolKit/blob/main/skills/wsl-toolkit-agents/SKILL.md), not a second binary. |
 | `git-sync` | [`Azathothas/ToolKit`](https://github.com/Azathothas/ToolKit) | commit and push with [`conventions/git.md`](conventions/git.md)'s rules enforced rather than remembered |
 | `fill-license` | [`Azathothas/ToolKit`](https://github.com/Azathothas/ToolKit) | writes a `LICENSE` from a canonical text with the holder filled in, and refuses the ones whose notice is not yours to alter. [`../LICENSES/README.md`](../LICENSES/README.md) says which. |
 | `deslop` | [`Azathothas/ToolKit`](https://github.com/Azathothas/ToolKit) | inventories the files in a tree that address a reader as an agent. [`methodology/lean-adoption.md`](methodology/lean-adoption.md) is the procedure. |
-| `write-file` | [`Azathothas/ToolKit`](https://github.com/Azathothas/ToolKit) | writes or patches a file without the shell touching the payload. [`conventions/shell.md`](conventions/shell.md) section 1 is why that matters. |
+| ⭐ `text-tool` | [`Azathothas/ToolKit`](https://github.com/Azathothas/ToolKit) | writes or patches a file without the shell touching the payload, and refuses a substitution whose match count you did not state. [`conventions/shell.md`](conventions/shell.md) section 1 is why that matters; the [skill](https://github.com/Azathothas/ToolKit/blob/main/skills/text-tool/SKILL.md) is how to drive it. |
 
 ---
 
@@ -89,7 +100,7 @@ anything. ⛔ Probe by RUNNING the tool, not by finding it.
 | read or reshape YAML | [`yq`](https://github.com/mikefarah/yq) | the same reason |
 | lint POSIX shell | [`shellcheck`](https://www.shellcheck.net/) | it finds the quoting and exit-code traps [`conventions/shell.md`](conventions/shell.md) documents, before they ship |
 | lint PowerShell | [`PSScriptAnalyzer`](https://github.com/PowerShell/PSScriptAnalyzer) | the same, on the half a POSIX linter cannot see |
-| time a command honestly | [`hyperfine`](https://github.com/sharkdp/hyperfine) | a single `time` run is not a measurement. [`methodology/experiments.md`](methodology/experiments.md) says what one owes. |
+| time a command honestly | [`hyperfine`](https://github.com/sharkdp/hyperfine) | a single `time` run is not a measurement. [`methodology/research.md`](methodology/research.md) section 4 says what one owes. |
 | count lines of code | [`scc`](https://github.com/boyter/scc) or [`tokei`](https://github.com/XAMPPRocky/tokei) | ⚠ counters disagree about blank and comment lines, so name which one produced a number |
 | search a tree | [`rg`](https://github.com/BurntSushi/ripgrep) | it locates; it does not confirm. Open the file. |
 | run something on Linux from Windows | `wsl-toolkit`, above | never install a distro by hand and leave it registered. [`containers.md`](containers.md). |

@@ -167,7 +167,7 @@ its conclusions and deleted eleven clones, leaving the next session to re-fetch
 all eleven to check one citation, and one lost its data entirely because the
 directory it used was ignored. ⭐ The corpus is the evidence, and a conclusion
 nobody can re-check is an opinion.
-[`../methodology/references.md`](../methodology/references.md) section 4 is the
+[`../methodology/research.md`](../methodology/research.md) section 3.4 is the
 rule, and ⚠ where a corpus is genuinely too large for every clone it goes on its
 own branch, which is still tracked.
 

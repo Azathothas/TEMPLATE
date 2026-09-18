@@ -19,9 +19,9 @@
 # every .ts, .py, .rs and .sh in the tree went unchecked, so it moved to
 # check-control-bytes.sh, which reads every text file. Run both.
 #
-# ⚠ THE CHARACTER HALF OF THE PROSE RULE IS NOT HERE. No em dash and no
-# character outside the five belong to check-markers.sh, which reads every
-# tracked text file rather than markdown alone. Run both. What stays here is
+# ⚠ THE CHARACTER HALF OF THE PROSE RULE IS NOT HERE. Nothing outside the
+# five, and the dash respelt in hyphens, belong to check-markers.sh, which
+# reads every tracked text file rather than markdown alone. Run both. What stays here is
 # what is specific to a document: links, fenced blocks, placeholders and
 # orphan pages.
 #

@@ -161,7 +161,7 @@ git add -f bench/the-one-that-matters.json
   all of them to check a citation, and one lost its data outright because the
   directory was ignored. ⚠ Where a corpus is too large for every clone, it goes
   on its own branch, which is still tracked. See
-  [`../docs/methodology/references.md`](../docs/methodology/references.md).
+  [`../docs/methodology/research.md`](../docs/methodology/research.md).
 
 ---
 

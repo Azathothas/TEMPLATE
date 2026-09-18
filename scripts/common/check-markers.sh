@@ -1,7 +1,7 @@
 #!/bin/sh
 # check-markers.sh - only the five defined characters, and not too many of them.
 #
-# Two rules, one subject, one home. docs/conventions/prose.md is the rule and
+# Four rules, one subject, one home. docs/conventions/prose.md is the rule and
 # this is the machine behind it.
 #
 #   1. THE CHARACTER SET. Every tracked text file is ASCII, with the three
@@ -9,6 +9,40 @@
 #   2. THE DENSITY. A file carrying more markers than the ceiling below is
 #      refused, because a page where every paragraph shouts has no markers at
 #      all.
+#   3. THE RESPELT EM DASH. Markdown prose only. Rule 1 already refuses the
+#      character, and this refuses the ASCII spellings of it.
+#   4. AN UNCLOSED FENCE. Markdown only, and it exists because it is a BYPASS
+#      of the other three rather than a typo.
+#
+# -- WHY RULE 3 EXISTS, AND WHY IT BELONGS BESIDE RULE 1 ---------------------
+#
+# ⛔ BANNING A CHARACTER TAUGHT AGENTS TO SPELL IT DIFFERENTLY. Reported by
+# this repository's operator on 2026-09-17: agents reaching for an em dash,
+# finding the character refused, and writing `--` or a comma instead. The rule
+# was satisfied on every run and the sentence was unchanged, which is the same
+# shape as the marker allowlist story two sections down: keeping to the letter
+# of a rule was read as compliance, and nothing measured the thing the rule was
+# for.
+#
+# ⚠ SO THE SPELLING IS THE CHECKABLE HALF AND NOT THE WHOLE RULE. What the
+# rule actually asks for is a sentence that needs no dash at all. A comma
+# splice carrying a parenthetical is the same defect and NOTHING HERE CAN SEE
+# IT, because a comma is an ordinary character. prose.md says so in the same
+# paragraph that states the rule, so a reader does not mistake a green run for
+# a well-written page.
+#
+# ⚠ ONE SPELLING IS DELIBERATELY NOT REFUSED. A spaced single hyphen reads as
+# a dash to some writers, and no incident here involved one: measured over this
+# tree on 2026-09-18, zero markdown lines use one in prose. A rule with no
+# incident behind it is a preference, so it is not armed.
+#
+# ⭐ BOTH ARMED PATTERNS WERE MEASURED BEFORE THEY WERE ARMED. Over this
+# tree's tracked markdown on 2026-09-18: zero hits for a spaced run of hyphens
+# and zero for a run between two alphanumerics, under the exemptions below.
+# ⚠ The file count is deliberately not quoted here. It changed twice in the
+# session that took the measurement, and a number that moves while you write it
+# is a number that will be wrong by the time anybody reads it. A guard is armed against an empty tree on purpose; the mutation test
+# is what proves it can still fire.
 #
 # -- WHY THIS OWNS THE CHARACTER RULE AND check-docs.sh NO LONGER DOES -------
 #
@@ -219,10 +253,27 @@ for f in $FILES; do
       # character it bans. Outside markdown there is no exemption: a source
       # file has no reader who needs a specimen.
       if (ISMD) {
-        if (line ~ /^[ \t]*```/) { fence = !fence; next }
+        if (line ~ /^[ \t]*```/) { fence = !fence; if (fence) fenceline = NR; next }
         if (fence) next
         while (match(line2, /`[^`]*`/))
           line2 = substr(line2, 1, RSTART - 1) substr(line2, RSTART + RLENGTH)
+
+        # ⛔ AN EM DASH RESPELT IN HYPHENS. Rule 3, and its scope is prose in a
+        # markdown file. A quoted line, a table row and a heading are out:
+        # quoted wording is kept verbatim by a rule of its own, and neither of
+        # the other two is a sentence. Link targets and bare URLs go too,
+        # because a hyphen pair inside a path somebody else owns is not
+        # writing. ⚠ An apostrophe anywhere in this comment ENDS THE awk
+        # PROGRAM, because the program is single-quoted by the shell around
+        # it. That is the trap docs/conventions/shell.md section 1 documents,
+        # and it fired here, in this comment, while this rule was written.
+        if (line !~ /^[ \t]*>/ && line !~ /^[ \t]*\|/ && line !~ /^[ \t]*#/) {
+          d = line2
+          gsub(/\]\([^)]*\)/, " ", d)
+          gsub(/https?:\/\/[^ )]*/, " ", d)
+          if (d ~ /[ \t]--+[ \t]/ || d ~ /[A-Za-z0-9]--+[A-Za-z0-9]/)
+            printf "DASH\t%d\t-\n", NR
+        }
       }
 
       # Whatever survives must be ASCII. Report the first offender per line;
@@ -251,7 +302,16 @@ for f in $FILES; do
         break
       }
     }
-    END { printf "STAT\t%d\t%d\n", nmark, nonblank }
+    END {
+      # ⛔ AN UNCLOSED FENCE IS A BYPASS, NOT A TYPO. The specimen exemption
+      # skips every line inside a fenced block, so a markdown file with an odd
+      # number of fence markers switches BOTH the character rule and the dash
+      # rule off from that point to the end of the file, and the check still
+      # exits 0. Reproduced in both halves on 2026-09-18: a file carrying a
+      # plain non-ASCII character after an unterminated fence passed.
+      if (ISMD && fence) printf "FENCE\t%d\t-\n", fenceline
+      printf "STAT\t%d\t%d\n", nmark, nonblank
+    }
   ' "$f" > "$TMP/out" 2>/dev/null || true
 
   fmark=0
@@ -259,6 +319,8 @@ for f in $FILES; do
   while IFS="$(printf '\t')" read -r kind a b; do
     case "${kind:-}" in
       CHAR) report "$f:$a U+$b is outside the five. docs/conventions/prose.md" ;;
+      DASH) report "$f:$a an em dash respelt in hyphens. Split the sentence; do not respell the dash. docs/conventions/prose.md" ;;
+      FENCE) report "$f: the fenced block opened at line $a is never closed, so every rule stopped applying from there to the end of the file. Close it." ;;
       STAT) fmark=${a:-0}; fnon=${b:-1} ;;
     esac
   done < "$TMP/out"

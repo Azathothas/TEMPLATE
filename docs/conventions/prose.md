@@ -5,14 +5,143 @@ rest is a reading.
 
 ---
 
-## The rule
+## ⭐ The rule is a register, and it has a name
 
-Short sentences. No em dashes. No marketing adjectives. No emoji beyond the
-five defined below, and only three of those belong in prose. Present tense.
-Every claim backed by a command a reader can run or a path a reader can open.
+⛔ **Write every document here in ASD-STE100, Simplified Technical English.**
+Not a house style, not a list of banned characters: a controlled language,
+published and maintained outside this repository, written so that a procedure
+means one thing to every reader, including one reading it in a second language
+and one reading it under pressure.
 
-Write for an agent with no memory of the session that wrote the file, and for a
-person who is looking for one fact.
+It binds every document in this tree, every document a project inherits from
+it, and every commit message, handoff, record entry and review write-up. There
+is no register for the important pages and a looser one for the rest.
+
+Beyond the register: every claim is backed by a command a reader can run or a
+path a reader can open. Write for an agent with no memory of the session that
+wrote the file, and for a person who is looking for one fact.
+
+### The rules, in full, in this repository's words
+
+⛔ **These are the working rules. They are not a summary of the standard and
+they are not optional.** The standard itself is somebody else's document and is
+not reproduced here; what follows is the subset that governs writing in this
+tree, stated so that a reviewer can hold it and an author can check themselves
+against it.
+
+**Words**
+
+1. **One word, one meaning, one part of speech.** A term keeps the same sense
+   for the whole document. A check refuses, a guard refuses, a gate refuses:
+   pick one and keep it.
+2. ⛔ **Never reach for a synonym to avoid repetition.** Repeating the term is
+   correct. Varying it makes a reader ask whether you mean something else, and
+   in a technical document they are right to ask.
+3. **Do not use a noun as a verb, or a verb as a noun.** "Action the finding"
+   and "the ask" are both refused.
+4. **Use the real noun rather than one made from a verb.** "It fails" beats "a
+   failure occurs". "The check refuses it" beats "refusal takes place".
+5. ⚠ **No more than three nouns in a row.** "Gate check exit code handling" has
+   four and means nothing. Break it with a preposition: "handling the exit code
+   of a gate check".
+
+**Verbs and voice**
+
+6. **Active voice.** "The check refuses it", never "it is refused".
+7. **Simple tenses only.** Present for what is true, past for what happened.
+   Not "will have been", not "would have needed to be".
+8. **Do not drop the verb.** A heading may; a sentence may not.
+9. **Start an instruction with its verb.** "Run the gate before you push", not
+   "The gate should be run before pushing".
+
+**Sentences and paragraphs**
+
+10. **One instruction per sentence.** A sentence carrying a second clause
+    between dashes is two instructions wearing one.
+11. **An instruction is at most 20 words. A descriptive sentence is at most
+    25.** ⚠ This one is a reading rather than a check, and the measurement is
+    below.
+12. **A paragraph covers one topic and runs to at most six sentences.**
+13. **Put the condition before the instruction.** "If the check exits 2, read
+    the first line" rather than "read the first line if the check exits 2". A
+    reader who acts on the first half of a sentence must not have acted wrongly.
+14. **Put a warning before the step it applies to**, never after. A caution a
+    reader meets afterwards is a caution about damage already done.
+
+**Punctuation**
+
+15. ⛔ **A sentence that needs a long dash is a sentence to split**, and every
+    spelling of the dash is the same defect. The section above this one carries
+    the rule and what it cost.
+16. **No slash meaning "and or".** Write which one you mean, or write both.
+17. **Nothing essential inside parentheses.** A reader skips them. If it
+    matters, it is a sentence.
+
+**What this cannot hold**
+
+⚠ **Rules 1 to 5 and 16 to 17 are readings.** No linter can decide whether two
+words mean the same thing, and one that tried would refuse correct writing.
+⛔ **Rule 15 is checked**, because a respelt dash is a character sequence rather
+than a judgement.
+
+⚠ **Rule 11 is a reading here, and the number is why.** Measured over this
+tree's markdown prose on 2026-09-18, on one Windows 11 Pro 10.0.26200 machine:
+**628 of 4182 sentences, 15.0%, run past 25 words**. ⭐ That figure is an upper
+bound rather than a count. The instrument splits on sentence punctuation, so a
+bulleted list whose items carry no full stop is measured as one long sentence,
+and the longest results it reported are all that shape. ⛔ **Arming a ceiling on
+an instrument that cannot tell a list from a sentence would refuse correct
+writing on its first run**, which is the failure mode that gets a check switched
+off within a week. The rule stays, the number stays with its conditions, and a
+ceiling waits for a splitter that can tell the difference.
+
+⚠ **Most of STE is a reading, and a linter declines it on purpose.** A guard
+over prose either passes vacuously or refuses legitimate writing. The sections
+below are the parts a machine can hold, and holding them is not the same as
+writing well. [`check-docs.sh`](../../scripts/common/check-docs.sh) says so in
+its own header rather than leaving the next session to rediscover it, and
+⭐ the register is one of the three review lenses instead:
+[`../methodology/reviews.md`](../methodology/reviews.md).
+
+---
+
+## ⛔ The dash rule is about the sentence, not about the character
+
+**A sentence that needs a dash is a sentence to split.** That is the whole
+rule, and every spelling of the dash is the same defect.
+
+⛔ **Banning the character taught agents to respell it.** Reported by this
+repository's operator on 2026-09-17: agents reaching for an em dash, finding
+the character refused, and writing `--` or a comma instead. Every run stayed
+green. Not one sentence got shorter. ⚠ That is the same shape as the marker
+story further down this page, where keeping strictly to five allowed
+characters was read as compliance and nothing measured the thing the rule
+existed for.
+
+So the rule now names the construction, and the check follows it as far as a
+check can go:
+
+| spelling | what happens |
+| --- | --- |
+| the em dash character | refused by the character rule below, which permits only ASCII and the five |
+| ⛔ a run of hyphens, spaced or between two words | refused by [`check-markers.sh`](../../scripts/common/check-markers.sh), in markdown prose |
+| ⚠ a comma splice carrying the same parenthetical | **not checkable, and the commonest of the three.** A comma is an ordinary character, and no guard can tell a parenthetical from a list. |
+
+⭐ **The third row is why a green run is not a well-written page.** Split the
+sentence, or make the clause its own sentence, or put it in a table. Respelling
+the dash changes nothing a reader experiences.
+
+⚠ **A spaced single hyphen is deliberately not refused.** No incident here
+involved one, and measured over this tree on 2026-09-18 no markdown line in
+prose used one. A rule with no incident behind it is a preference, and
+[`../templates/RULES.md`](../templates/RULES.md) says what a tree full of those
+costs.
+
+⭐ **Four exemptions, each because the text is not this repository writing.**
+A fenced block and a code span, so a page can show the spelling it refuses. A
+quoted line, because superseded wording is kept verbatim by a rule of its own.
+A table row and a heading, because neither is a sentence. A link target and a
+bare URL, because a hyphen pair inside a path somebody else owns is not prose.
 
 ---
 
@@ -236,9 +365,9 @@ check sees:
 5. **No page under the docs directory that nothing links to.**
 
 ⚠ **The character rules are checked by a different script, over a wider
-scope.** No em dash, nothing outside the five, and the density ceiling belong
-to [`check-markers.sh`](../../scripts/common/check-markers.sh), which reads
-every tracked text file rather than the documents alone.
+scope.** Nothing outside the five, the respelt dash and the density ceiling
+belong to [`check-markers.sh`](../../scripts/common/check-markers.sh), which
+reads every tracked text file rather than the documents alone.
 [`../../scripts/README.md`](../../scripts/README.md) says why one rule gets one
 enforcer: two checks holding one rule is two places for it to be wrong, and
 these two would have been wrong differently.
@@ -250,21 +379,10 @@ honest scope.
 
 ---
 
-## The register: Simplified Technical English
+## ⭐ Where the register actually goes wrong
 
-⭐ **Write the way a maintenance manual is written.** The standard is
-**ASD-STE100, Simplified Technical English**: a controlled language written so
-that a procedure means one thing to every reader, including one reading it in a
-second language and one reading it under pressure. What it asks for is what
-this page has been asking for in pieces:
-
-| STE asks for | which here means |
-| --- | --- |
-| one word, one meaning | a term is not a synonym for a different term two paragraphs later |
-| short sentences | a rule a reader has to re-read is a rule they will act on wrongly |
-| the active voice, present tense | "the check refuses it", not "it will have been refused" |
-| ⛔ no figurative language | no metaphor doing a technical term's job |
-| a real noun instead of a noun made from a verb | "it fails" beats "a failure occurs" |
+The standard is at the top of this page. This section is what measuring it
+against this tree found, which is not what anybody guessed.
 
 ⛔ **The failure mode here is metaphor used as jargon, not marketing copy.**
 This is worth stating precisely, because the obvious guess is wrong and the
@@ -275,12 +393,6 @@ into this page and never enforced. Armed on 2026-09-10 over this tree it found
 term. ⭐ That is the register that actually goes wrong, and no word list holds
 it: the offending words are ordinary until they are asked to carry a meaning
 they do not have.
-
-⚠ **So this rule is a reading, and the linter declines it on purpose.** A guard
-over prose either passes vacuously or refuses legitimate writing.
-[`check-docs.sh`](../../scripts/common/check-docs.sh) says so in its own header
-rather than leaving the next session to rediscover it. ⭐ It is one of the three
-review lenses instead: [`../methodology/reviews.md`](../methodology/reviews.md).
 
 **The two substitutions that do most of the work:**
 

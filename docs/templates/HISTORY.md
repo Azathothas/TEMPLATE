@@ -48,7 +48,7 @@ the only file that carries one. A page here that starts being consulted for
      reviews, and delete them otherwise. Both directories are created on first
      use rather than at bootstrap. -->
 
-| `references/` | sweeps of other projects: what was read, at which commit, what transfers and what does not. `docs/methodology/references.md` |
+| `references/` | sweeps of other projects: what was read, at which commit, what transfers and what does not. `docs/methodology/research.md` |
 | `reviews/` | deep reviews: what each swept, what it found, and ⛔ what it did NOT look at. `docs/methodology/reviews.md` |
 
 ---

@@ -105,6 +105,7 @@ project, is [`bootstrap/prompts/01-existing-project.md`](bootstrap/prompts/01-ex
 | [`MAINTAIN.md`](MAINTAIN.md) | the prompt to paste when improving this template |
 | [`bootstrap/`](bootstrap/) | the once-only path: the procedure, your answer sheet, the prompts |
 | [`docs/`](docs/) | the methodology, the conventions, the security rules, the templates |
+| [`prompts/`](prompts/) | a system prompt to paste into a harness. It names nothing in this tree, so it works where this tree cannot be reached. |
 | [`dotfiles/`](dotfiles/) | ignore, attribute, editor and CI files, by ecosystem |
 | [`LICENSES/`](LICENSES/) | canonical SPDX texts, and which four must never have their notice altered |
 | [`scripts/`](scripts/) | the environment probe, and the checks a project inherits. ⭐ [`docs/agent-tooling.md`](docs/agent-tooling.md) is what to reach for before installing anything. |
@@ -149,7 +150,7 @@ sh scripts/common/check-twins.sh
 | --- | --- |
 | `check-gate.sh` | ⭐ runs all of the below in one command. A skipped check reads as a skip, never as a pass, and zero passes is red. |
 | `check-docs.sh` | a broken link, a shell block that does not parse, a page nothing links to |
-| `check-markers.sh` | ⭐ a character outside the five, in **any** tracked text file, and a page carrying so many markers that none of them are visible |
+| `check-markers.sh` | ⭐ a character outside the five, in **any** tracked text file; a page carrying so many markers that none of them are visible; and, in markdown prose, a long dash respelt as hyphens or a fenced block left open |
 | `check-placeholders.sh` | a template placeholder left in a real file |
 | `check-control-bytes.sh` | a literal control byte, which makes a file invisible to `grep` and to `git diff` at once |
 | `check-attribution.sh` | ⭐ a commit that credits a tool. `dotfiles/githooks/commit-msg` refuses one before it exists; this reports the ones that got in. |

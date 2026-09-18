@@ -51,7 +51,7 @@ trackers. A submission therefore costs a maintainer's time, costs this
 project a session, and returns nothing.
 
 ⚠ **You will read upstream's tracker during a sweep, and it will tell you.**
-That is the point of [`references.md`](references.md) step 4. A project that has
+That is the point of [`research.md`](research.md) section 3.4. A project that has
 closed this class of change before, or that has a stated policy, or that has a
 "working as intended" ruling on the exact defect, has already answered. ⭐ **Draw
 the conclusion and patch.** Do not bring the reading back as a proposal to try
@@ -232,6 +232,6 @@ this methodology has a place for.
 | topic | where |
 | --- | --- |
 | ⛔ what may never be written to a remote | [`../security/remote-ops.md`](../security/remote-ops.md) |
-| how to study the upstream you are about to vendor | [`references.md`](references.md) |
+| how to study the upstream you are about to vendor | [`research.md`](research.md) |
 | no defensive framing, and no history in a reference page | [`../conventions/prose.md`](../conventions/prose.md) |
 | where a superseded explanation goes instead | [`history.md`](history.md) |

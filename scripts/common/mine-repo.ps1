@@ -295,7 +295,7 @@ if ($LASTEXITCODE -eq 0) {
     [Console]::Error.WriteLine('mine-repo: the corpus IS the evidence. An ignored one is lost on the')
     [Console]::Error.WriteLine('mine-repo: next machine, and every citation built on it goes unsourced.')
     [Console]::Error.WriteLine('mine-repo: un-ignore it, choose another -Out, or put the corpus on its')
-    [Console]::Error.WriteLine('mine-repo: own branch. docs/methodology/references.md section 4.')
+    [Console]::Error.WriteLine('mine-repo: own branch. docs/methodology/research.md section 3.4.')
     [Console]::Error.WriteLine('mine-repo: the rule that did it:')
     & git check-ignore -v -- $dest 2>$null | ForEach-Object { [Console]::Error.WriteLine($_) }
     exit 2

@@ -72,7 +72,7 @@ This says what was believed and why that changed.
 | a **superseded explanation**, with the measurement that took it away | the main case |
 | a **decision that was reversed**, kept verbatim so reversing it back is a restore rather than a rewrite | |
 | a **dead end**, with what it cost, so nobody spends that again | |
-| a **reference sweep**: what was read, at which commit, what transfers | [`references.md`](references.md) |
+| a **reference sweep**: what was read, at which commit, what transfers | [`research.md`](research.md) |
 | a **deep review**: what it swept, what it found, and what it did not look at | [`reviews.md`](reviews.md) |
 | a **session record**, where a session is worth a record at all | [`sessions.md`](sessions.md) |
 

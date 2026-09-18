@@ -46,6 +46,7 @@ to route one.**
 | --- | --- |
 | `AGENTS.md`, and any file of that family under any name | ⛔ the routers. This is the whole point. |
 | `ROUTE.md`, `ADOPT.md`, `MAINTAIN.md`, `bootstrap/` | entry points for an agent session |
+| ⛔ `prompts/` | the least ambiguous row in this table. A system prompt is text written to be read by a machine and by nothing else, so it fails the test above before any reading is needed. ⚠ It is also the row a listing by NAME will miss, because the path says nothing about an agent. |
 | `docs/agent-tooling.md` | ⚠ the CATALOGUE is worth keeping and the framing is not. It opens by telling a session what to do before it installs something, and its first table is about a session's reflexes. Lift the tool rows into the project's own documentation and drop the rest. |
 | `docs/methodology/*` | read the note below before deleting all of it |
 | `docs/templates/*` | skeletons an agent fills in |
@@ -66,7 +67,7 @@ loses the part that was actually paid for:
 | --- | --- |
 | `gate.md` | a change passes automated suites, a run of the real thing, and a human reading, and each is blind to what the other two catch |
 | `reviews.md` | a review pass asks one question. Three passes asking the same question is one pass written up three times. |
-| `experiments.md` | a measurement lives in a script in the tree, carries its conditions, and a negative result gets committed |
+| `research.md` | ⚠ the MEASUREMENT half is worth keeping and the framing is not. A measurement lives in a script in the tree, carries its conditions, and a negative result gets committed. The rest of the file addresses a session. |
 | `vendoring.md` | patch what you vendor, record what you changed, reconcile a release by reading rather than by preferring |
 
 ⭐ **Lift those four into the project's own `CONTRIBUTING.md`, in the project's

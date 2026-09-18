@@ -4,13 +4,32 @@
 # same ceiling. scripts/README.md says why every check here has two
 # implementations, and check-twins.sh is what stops them drifting.
 #
-# Two rules, one subject, one home. docs/conventions/prose.md is the rule.
+# Four rules, one subject, one home. docs/conventions/prose.md is the rule.
 #
 #   1. THE CHARACTER SET. Every tracked text file is ASCII, with the three
 #      prose markers and the two status glyphs as the only exception.
 #   2. THE DENSITY. A file carrying more markers than the ceiling below is
 #      refused, because a page where every paragraph shouts has no markers at
 #      all.
+#   3. THE RESPELT EM DASH. Markdown prose only. Rule 1 already refuses the
+#      character, and this refuses the ASCII spellings of it.
+#   4. AN UNCLOSED FENCE. Markdown only, and it exists because it is a BYPASS
+#      of the other three rather than a typo.
+#
+# -- WHY RULE 3 EXISTS, AND WHY IT BELONGS BESIDE RULE 1 ---------------------
+#
+# ⛔ BANNING A CHARACTER TAUGHT AGENTS TO SPELL IT DIFFERENTLY. Reported by
+# this repository's operator on 2026-09-17: agents reaching for an em dash,
+# finding the character refused, and writing `--` or a comma instead. The rule
+# was satisfied on every run and the sentence was unchanged.
+#
+# ⚠ THE SPELLING IS THE CHECKABLE HALF AND NOT THE WHOLE RULE. A comma splice
+# carrying a parenthetical is the same defect and nothing here can see it.
+# prose.md states that in the same paragraph as the rule, so a green run is not
+# mistaken for a well-written page.
+#
+# ⚠ A SPACED SINGLE HYPHEN IS DELIBERATELY NOT REFUSED. No incident here
+# involved one, and a rule with no incident behind it is a preference.
 #
 # -- WHY THIS OWNS THE CHARACTER RULE AND check-docs NO LONGER DOES ----------
 #
@@ -172,9 +191,25 @@ foreach ($rel in $files) {
 
         # ⭐ THE SPECIMEN EXEMPTION, markdown only.
         if ($isMd) {
-            if ($line -match '^[ \t]*```') { $fence = -not $fence; continue }
+            if ($line -match '^[ \t]*```') { $fence = -not $fence; if ($fence) { $fenceLine = $ln }; continue }
             if ($fence) { continue }
             $rest = [regex]::Replace($rest, '`[^`]*`', '')
+
+            # ⛔ AN EM DASH RESPELT IN HYPHENS. Rule 3, prose in a markdown
+            # file. A quoted line, a table row and a heading are out: quoted
+            # wording is kept verbatim by a rule of its own, and neither of the
+            # other two is a sentence. Link targets and bare URLs go too,
+            # because a hyphen pair inside a path somebody else owns is not
+            # writing. ⚠ -cmatch, not -match: this file already carries the
+            # note about a case-insensitive comparison swallowing a finding.
+            if ($line -cnotmatch '^[ \t]*>' -and $line -cnotmatch '^[ \t]*\|' -and $line -cnotmatch '^[ \t]*#') {
+                $d = [regex]::Replace($rest, '\]\([^)]*\)', ' ')
+                $d = [regex]::Replace($d, 'https?://[^ )]*', ' ')
+                if ($d -cmatch '[ \t]--+[ \t]' -or $d -cmatch '[A-Za-z0-9]--+[A-Za-z0-9]') {
+                    $problems++
+                    [void]$report.Add(("  {0}:{1} an em dash respelt in hyphens. Split the sentence; do not respell the dash. docs/conventions/prose.md" -f $rel, $ln))
+                }
+            }
         }
 
         # Whatever survives must be ASCII. First offender per line only; a line
@@ -198,6 +233,16 @@ foreach ($rel in $files) {
             [void]$report.Add(("  {0}:{1} U+{2:X4} is outside the five. docs/conventions/prose.md" -f $rel, $ln, $cp))
             break
         }
+    }
+
+    # ⛔ AN UNCLOSED FENCE IS A BYPASS, NOT A TYPO. The specimen exemption skips
+    # every line inside a fenced block, so a markdown file with an odd number of
+    # fence markers switches BOTH the character rule and the dash rule off from
+    # that point to the end of the file, and the check still exits 0.
+    # Reproduced in both halves on 2026-09-18.
+    if ($isMd -and $fence) {
+        $problems++
+        [void]$report.Add(("  {0}: the fenced block opened at line {1} is never closed, so every rule stopped applying from there to the end of the file. Close it." -f $rel, $fenceLine))
     }
 
     if ($fnon -lt 1) { $fnon = 1 }

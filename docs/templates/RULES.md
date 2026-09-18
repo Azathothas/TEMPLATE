@@ -34,7 +34,7 @@ and following the link is how you read it.
 | commit identity, and what may reach a remote | [`docs/conventions/git.md`](../docs/conventions/git.md) |
 | anything outside this machine | [`docs/security/remote-ops.md`](../docs/security/remote-ops.md) |
 | what a check must satisfy to be one | [`scripts/README.md`](../scripts/README.md) |
-| how documents are written | [`docs/conventions/prose.md`](../docs/conventions/prose.md) |
+| the register everything is written in | [`docs/conventions/prose.md`](../docs/conventions/prose.md) |
 | where superseded wording goes | [`docs/methodology/history.md`](../docs/methodology/history.md) |
 
 ---

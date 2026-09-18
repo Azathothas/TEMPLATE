@@ -316,16 +316,32 @@ the standard and the review pass reads for it.
 links are written relative to where the file will live in a project. The
 prose rules still apply to them.
 
-⛔ **The character rules are NOT here any more.** No em dash and no character
-outside the five moved to `check-markers.sh`, which reads every tracked text
-file rather than markdown alone. Two checks enforcing one rule is two places
+⛔ **The character rules are NOT here any more.** Nothing outside the five,
+and the dash respelt in hyphens, moved to `check-markers.sh`, which reads every
+tracked text file rather than markdown alone. Two checks enforcing one rule is two places
 for it to be wrong, which is the same move the control-byte rule already made
 out of this file.
 
 ### `common/check-markers.sh`
 
-Only the five defined characters, and not too many of them. Two rules, one
-subject, one home.
+Only the five defined characters, not too many of them, no dash respelt in
+hyphens, and no unclosed fence. Four rules, one subject, one home.
+
+⛔ **The third rule exists because banning a character taught agents to respell
+it.** Reported by this repository's operator on 2026-09-17: an em dash refused,
+and `--` or a comma written instead, with every run green and not one sentence
+shorter. ⚠ The comma half is not checkable and the page says so, because a
+green run is not a well-written page.
+
+⛔ **The fourth rule closes a BYPASS of the other three, and it was found by
+attacking the check rather than by reading it.** The specimen exemption skips
+every line inside a fenced block, so a markdown file with an odd number of
+fence markers switched rules 1 to 3 off from that point to the end of the file.
+Planted on 2026-09-18 in both halves: a file carrying a plain non-ASCII
+character after an unterminated fence exited **0**. ⭐ It is the review lens
+that asks whether a guard can actually fail, applied to a guard that had just
+been extended, and it is the argument for running that lens on every change to
+a check rather than only on a new one.
 
 ⛔ **It reads every tracked text file.** The rule it inherited scanned markdown
 alone, and on the day it was widened this repository's own scripts held **2290**

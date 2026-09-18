@@ -21,7 +21,7 @@ the NAT default was confirmed on the one Windows 11 machine this was written
 on.
 
 ⭐ **So treat the mechanisms as a list of things to check for, not as findings.**
-[`methodology/experiments.md`](methodology/experiments.md) is what turns one
+[`methodology/research.md`](methodology/research.md) section 4 is what turns one
 into the other, and ⛔ a number taken from here without re-measuring is a
 number with no conditions.
 
@@ -56,20 +56,49 @@ it is a container engine you already have.
 and a container engine solve different problems with different interfaces. Pick
 by what the host has, and say in the write-up which one produced a number.
 
-⭐ **It is two products now, and a caller gets the compiled one by default.**
-Upstream ships a PowerShell script and an executable that carries that same
-script inside itself and adds to it, and its launcher resolves the executable
-first. ⚠ **A page here that names its flags is a page that goes stale without
-anybody editing it**, so this one does not: read the tool's own documentation
-at the link. What matters at this level is that the two exist, that a caller
-can ask for either, and that "the version I ran" is now a question with two
-answers.
-
 ⭐ **It also answers whether a machine can run an isolated Linux job at all**,
 in one command, rather than leaving a session to infer it from three.
 [`hosted-sessions.md`](hosted-sessions.md) is why that matters: the commonest
 false claim about a provisioned machine is that it cannot do something whose
 daemon was merely never started.
+
+### ⛔ What the tool is, and how to call it, is not written here
+
+**This page owns the PROCEDURE. Upstream owns the TOOL.** Nothing below
+describes a flag, a subcommand, a product shape or a version, and that split is
+paid for rather than tidy.
+
+What it cost: this page used to say the tool was two products, a PowerShell
+script and an executable that carried it, with a launcher that resolved the
+executable first. Upstream deleted the PowerShell product and its launcher.
+This page and [`agent-tooling.md`](agent-tooling.md) went on saying otherwise
+until upstream listed this repository in its own consumer register with the
+remedy written beside it. Nobody here noticed, because nothing here could:
+the fact had moved in a tree this one cannot see.
+[`history/upstream-tool-shape.md`](history/upstream-tool-shape.md) keeps the
+retired wording.
+
+⭐ **Upstream ships an agent-facing skill per product, and each is generated
+against the executable's own manual rather than typed from memory.** Read the
+one you need before running anything. ⚠ If one of the three links below has
+stopped resolving, the directory holding them is
+[`skills/`](https://github.com/Azathothas/ToolKit/tree/main/skills) and a
+renamed file is still one listing away.
+
+| skill | answers |
+| --- | --- |
+| [`skills/wsl-toolkit`](https://github.com/Azathothas/ToolKit/blob/main/skills/wsl-toolkit/SKILL.md) | building and operating a base: what a base is, how to make one, how to grant it a directory, how to run a command in it, and how to attack it rather than trust a page |
+| [`skills/wsl-toolkit-agents`](https://github.com/Azathothas/ToolKit/blob/main/skills/wsl-toolkit-agents/SKILL.md) | driving a coding agent inside a base, and reading back the model and the effort it really started on |
+| [`skills/text-tool`](https://github.com/Azathothas/ToolKit/blob/main/skills/text-tool/SKILL.md) | writing and editing a file from a shell that would otherwise mangle the payload. [`conventions/shell.md`](conventions/shell.md) section 1 is why that matters. |
+
+⚠ **Those three links name a branch, and every other fetch on this page is
+pinned.** The difference is what happens to the bytes: a page a reader opens is
+read, and a pinned fetch is code that will execute. Pin what runs. Read what is
+current.
+
+⚠ **Ask the binary for its own version and its own manual.** A version written
+into a document is a version that was true once, and the tool generates its
+manual from the commands it really has.
 
 ---
 
@@ -160,10 +189,18 @@ opens a substitution, and Windows PowerShell 5.1 drops a double quote out of a
 child process's argument list before the script runs. ⭐ Send a **file**, or
 send **base64**, which has no character any shell touches.
 
-⚠ **Write the script with LF endings.** A byte-exact channel will not repair
-anybody's payload, so a CRLF script makes a POSIX shell read the carriage
-return as part of the last word on every line. A here-string written on a
-Windows host is CRLF unless something says otherwise.
+⛔ **Do not hand a job payload to the platform command yourself.** Upstream
+measured this on 2026-09-09: a payload handed to `wsl.exe` as an argument had a
+backtick EXECUTED, and the call still reported exit 0 over the failure. A
+wrapper of your own around that command reproduces the defect.
+
+⚠ **A CRLF script makes a POSIX shell read the carriage return as part of the
+last word on every line**, and a here-string written on a Windows host is CRLF
+unless something says otherwise. ⭐ **Check whether your tool already repairs
+this before writing a conversion step**: the Windows tool does, on the copy it
+sends, leaving the file on disk untouched. That is one of several hazards it
+absorbed, and a caller who handles them again is writing code that now has two
+owners.
 
 ⚠ **Pass values as assignments, never by substituting them into the script.** A
 value carrying a slash, an ampersand or a quote corrupts a substitution and
@@ -184,12 +221,16 @@ why.
 
 | the mode | what the guest reaches |
 | --- | --- |
-| NAT, the default, and what this was written on | the host's address on the virtual adapter. Ask the tool; it changes. |
+| NAT, the default, and what this was written on | the host's address on the virtual adapter, which is assigned and changes |
 | mirrored | the host's own loopback, so a caller's branch for this disappears |
-| bridged | the guest is on the LAN, and which host address it reaches is a choice rather than a lookup |
 
-⛔ **Read the address at run time, never record it.** It is assigned and it
-changes. A number written into a document is a number that will be wrong.
+⛔ **Read the address at run time, never record it.** A number written into a
+document is a number that will be wrong. ⭐ **Ask the tool rather than deriving
+it**: the Windows tool answers this in one command, reading the host's own
+configuration and starting nothing, and it refuses any mode it cannot answer
+for rather than guessing. ⚠ A third mode exists in the platform and is refused
+there, so a page listing three of them and a procedure that supports two is the
+kind of disagreement that costs an afternoon.
 
 ⚠ **Do not forward a port to work around this.** On Windows that needs an
 elevated session and leaves a rule behind after the tool exits. Bind the host
@@ -205,6 +246,12 @@ and a line-oriented reader shows nothing at all while a large download is
 visibly progressing, because the downloader redraws one line and emits no
 newline for minutes.
 
+⭐ **Every row below is a hazard, not an assignment.** The Windows tool ships
+all five, and upstream's manual is where their flags live. A caller who builds
+them again owns a second implementation of a solved problem.
+⛔ **Check before you build.** This page listing the shapes has already been
+read as instructions to implement them.
+
 | the shape | why it is needed |
 | --- | --- |
 | ⭐ **a heartbeat on SILENCE, not on a timer** | a chatty command produces none, and a quiet one says how long it has been quiet and whether the guest is still alive. "The command is quiet" and "the machine is gone" are the two states you could not otherwise tell apart. |
@@ -216,6 +263,12 @@ newline for minutes.
 ⚠ **Nothing is injected into the guest for this.** Every figure is one the host
 already holds, plus a read-only query about the machine's state. A guest with
 no userspace to speak of still needs to be watchable.
+
+⛔ **A heartbeat reads a feed, and a feed that does not exist must report
+ABSENT rather than zero.** Upstream measures this per feed and per guest kind,
+because a container and a distribution share a kernel and nothing else. A
+watcher that renders a missing feed as `0` tells you the job is idle when what
+it means is that nobody is looking.
 
 ⛔ **A guest command that can hang carries its own timeout too.** A build that
 runs for an hour is legitimate, so the tool cannot bound the command by
@@ -237,6 +290,13 @@ reads as a file that has gone.
 a hard interrupt does not run one. Expect a registered machine and a rootfs
 image of several hundred megabytes. List before you start and list after you
 finish; a purge is what removes them.
+
+⭐ **Ask the tool what it is holding before you go looking by hand.** The
+Windows tool reports its own resources and prints a removal plan before it
+carries one out, which is the shape to want from any of them: a plan you read,
+then an apply. ⚠ A default that RETAINS a finished job's container is a
+deliberate choice rather than a leak, because a failed job you cannot open
+afterwards is a job you have to run again.
 
 ⚠ **A listing shows a machine that is running right now the same way it shows
 an orphan.** Read the timestamp before purging.
@@ -277,7 +337,7 @@ registered machine that does not work.
 
 ⚠ **This repository states no number here**, because the floor is the host's
 and this page cannot see the host.
-[`methodology/experiments.md`](methodology/experiments.md) is how to take the
+[`methodology/research.md`](methodology/research.md) section 4 is how to take the
 measurement and what it owes: the machine, the day, the versions.
 
 ---

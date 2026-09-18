@@ -54,12 +54,13 @@ front of you and read what it names, in full.
 | **Resuming an interrupted session** | [`docs/methodology/sessions.md`](docs/methodology/sessions.md) resuming section , the latest handoff , ⛔ the tree and the running system, never the old conversation |
 | **Touching anything remote** | [`docs/security/remote-ops.md`](docs/security/remote-ops.md) |
 | **Anything involving a credential** | [`docs/security/secrets.md`](docs/security/secrets.md) |
-| **Writing or editing a document** | [`docs/conventions/prose.md`](docs/conventions/prose.md) , [`docs/conventions/docs.md`](docs/conventions/docs.md) |
+| **Writing anything at all: a document, a commit message, a handoff** | [`docs/conventions/prose.md`](docs/conventions/prose.md) for the register, then [`docs/conventions/docs.md`](docs/conventions/docs.md) |
 | **Committing** | [`docs/conventions/git.md`](docs/conventions/git.md) |
 | **Anything crossing a shell, or a quoting problem** | [`docs/conventions/shell.md`](docs/conventions/shell.md) |
-| **Studying an external repository** | [`docs/methodology/references.md`](docs/methodology/references.md) |
+| **Finding something out rather than building it** | [`docs/methodology/research.md`](docs/methodology/research.md) |
+| **Studying an external repository** | [`docs/methodology/research.md`](docs/methodology/research.md) section 3 |
 | ⭐ **Touching any vendored or third-party source** | [`docs/methodology/vendoring.md`](docs/methodology/vendoring.md) . ⛔ Patch it here, and upstreaming is not a topic |
-| **Taking a measurement** | [`docs/methodology/experiments.md`](docs/methodology/experiments.md) |
+| **Taking a measurement** | [`docs/methodology/research.md`](docs/methodology/research.md) section 4 |
 | **Recording something superseded** | [`docs/methodology/history.md`](docs/methodology/history.md) . ⛔ Not into the page it supersedes |
 | ⭐ **Waiting for anything** | [`docs/conventions/shell.md`](docs/conventions/shell.md) section 10 . ⛔ Never end the turn, and never a harness scheduler |
 | **Closing out a session** | [`docs/methodology/sessions.md`](docs/methodology/sessions.md) , [`docs/methodology/reviews.md`](docs/methodology/reviews.md) |

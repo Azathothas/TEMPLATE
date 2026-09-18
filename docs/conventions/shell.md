@@ -27,7 +27,7 @@ those attempts costs a turn and some of them corrupt a file quietly.
 | reach for | when |
 | --- | --- |
 | ⭐ **whatever writes a file directly for you**, without a shell in the path | ⛔ **always, if you have one.** Nothing quotes, nothing expands, nothing to escape. |
-| a helper built for it, such as `write-file` in [`agent-tooling.md`](../agent-tooling.md) | you are in a shell and the payload is prose, a patch or a substitution |
+| a helper built for it, such as `text-tool` in [`agent-tooling.md`](../agent-tooling.md) | you are in a shell and the payload is prose, a patch or a substitution |
 | base64 through an argument | the payload has to cross a shell at all |
 | copy from a file that already exists | the content is already on disk |
 | ⚠ a quoted heredoc | ⛔ nothing. See the measurement below, and the one under it. |
@@ -248,8 +248,9 @@ rather than warns, over every tracked text file.
 
 - ⭐ **Git Bash rewrites arguments that look like POSIX paths.** Anything with a
   leading slash is converted to a Windows path before the target process sees
-  it. When the target is not a Windows program, the rewrite is corruption, it
-  is silent, and the error never names the cause. Measured on 2026-08-26:
+  it. When the argument was not naming a file on this machine, the rewrite is
+  corruption, it is silent, and the error never names the cause. Measured on
+  2026-08-26:
 
   ```bash
   gh api /repos/OWNER/NAME/actions/workflows
@@ -261,6 +262,32 @@ rather than warns, over every tracked text file.
 
   `gh` happens to detect it and say so. Almost nothing else does: a container
   runtime receives the rewritten path as a real argument and acts on it.
+
+  ⛔ **The rewrite has three shapes and only one of them looks wrong.**
+  Measured on one Windows 11 machine (10.0.26200) on 2026-09-18, Git Bash
+  5.3.15, by printing the argument vector of a NATIVE Windows callee
+  (`node` v26.7.0); a callee that is itself an msys program receives every one
+  of these unchanged, so the trap depends on what you are calling as well as
+  on what you sent:
+
+  | sent | arrived as |
+  | --- | --- |
+  | `/single` | `C:/Program Files/Git/single` |
+  | ⚠ `/b` | `B:/`, a drive root, because one letter reads as a drive |
+  | ⛔ `//double-slash` | `/double-slash`. **One slash is silently removed** and nothing else changes. |
+  | `a/b` | `a/b`, untouched. Only a LEADING slash triggers it. |
+
+  ⭐ **The third row is the one that costs a session.** The first two produce a
+  path so obviously wrong that the receiver complains. A payload beginning `//`
+  is a Go, C or JavaScript comment, and it arrives looking almost right, so it
+  is written to a file and read back much later. ⚠ It is also why a helper that
+  takes a text payload as an argument is given that payload as base64 rather
+  than as text.
+
+  ⚠ **The rewrite is about the ARGUMENT, not the callee's platform.** `gh.exe`
+  is a Windows program and was corrupted anyway, because what it wanted was an
+  API path rather than a file path. The question to ask is whether the leading
+  slash you wrote was ever meant to name something on this filesystem.
 
   Two variables turn it off, and they cover different things. `MSYS_NO_PATHCONV`
   disables the leading-path heuristic; `MSYS2_ARG_CONV_EXCL` is a per-argument

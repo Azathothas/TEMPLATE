@@ -120,8 +120,7 @@ rule that was never meant to apply here.
 | `docs/methodology/initialize.md` | kept for a greenfield project, deleted for an adopt |
 | `docs/methodology/ingest.md` | kept for an adopt, deleted for a greenfield project |
 | `docs/methodology/work-stages.md` / `work-todo.md` | keep the one the model selects, delete the other, delete `choosing-a-work-model.md` once chosen |
-| `docs/methodology/references.md` | kept when the project will study external code, which is most of them |
-| `docs/methodology/experiments.md` | kept when the project will take its own measurements. ⚠ A different job from the row above, and most projects need both. |
+| ⭐ `docs/methodology/research.md` | kept whenever a session will be asked to find something out rather than build it, which is nearly every project. It is one document covering studying somebody else's code, taking your own measurements, and the proof of concept. ⚠ It absorbed `references.md` and `experiments.md`; a project that keeps neither job still keeps this file, because the alternative is a session inventing the procedure. |
 | `docs/methodology/vendoring.md` | ⭐ kept whenever the project will carry ANY third-party source: a vendored dependency, a fork, a copied script |
 | `docs/methodology/history.md` | ⭐ always kept, and the `docs/history/` directory is created in step 5. Deleting it is what makes the history land in the reference pages instead. |
 | `docs/methodology/template-sync.md` | kept if the project may take a later version of this template |
@@ -136,6 +135,7 @@ rule that was never meant to apply here.
 | `docs/agent-tooling.md`, `docs/containers.md` | ⭐ kept. They are what stops a session installing something, writing its own, or refusing because a tool is absent. Rewrite the "what this repository ships" table to the scripts this project actually has. |
 | `scripts/doctor/` | always kept. Every later session runs it, and a resuming session on a different machine needs it most. |
 | `scripts/common/` | kept. It is the gate, and a gate that has to fetch a check is red whenever somebody else's host is. |
+| ⭐ `prompts/` | kept when the project will drive other agents or hand work to a second harness, deleted otherwise. ⚠ It is not project documentation and it is not read by a session working here: it is a file the operator pastes somewhere else. |
 | `tools/` | deleted unless something in the plan genuinely needs a compiled helper |
 | `bootstrap/` | ⛔ deleted, last, in step 7 |
 

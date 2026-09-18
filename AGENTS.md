@@ -118,6 +118,7 @@ every later session and a routine task is not.
 | [`docs/containers.md`](docs/containers.md) | measuring in a machine you throw away afterwards | the job needs a machine this one is not |
 | ⭐ [`docs/hosted-sessions.md`](docs/hosted-sessions.md) | a machine somebody else provisioned and will take back | this session is not on the operator's own machine |
 | [`docs/history/`](docs/history/) | this repository's own superseded wording | a rule reads as if it contradicts another one |
+| ⭐ [`prompts/`](prompts/) | a system prompt to paste into a harness, naming no tool, path or repository | an agent arrives with a weak or hostile prompt, or none |
 | [`dotfiles/`](dotfiles/) | ignore, attribute, editor and CI files, by ecosystem | the probe reports which ecosystems apply |
 | [`LICENSES/`](LICENSES/) | canonical licence texts | the operator picks one |
 | [`scripts/`](scripts/) | the probe, and the guards a project inherits | always the probe, the rest by selection |
@@ -135,7 +136,7 @@ the topic. Reading the row is not reading the rule.
 | Commit identity, and never crediting a tool | [`docs/conventions/git.md`](docs/conventions/git.md) |
 | What may reach a remote, and what may not | [`docs/security/remote-ops.md`](docs/security/remote-ops.md) |
 | What never enters the tree | [`docs/security/secrets.md`](docs/security/secrets.md) |
-| How documents are written here | [`docs/conventions/prose.md`](docs/conventions/prose.md) |
+| The register EVERYTHING here is written in, ASD-STE100, and it binds a commit message as much as a page | [`docs/conventions/prose.md`](docs/conventions/prose.md) |
 | Quoting, heredocs, encodings, line endings | [`docs/conventions/shell.md`](docs/conventions/shell.md) |
 | ⭐ Holding a session without ending the turn | [`docs/conventions/shell.md`](docs/conventions/shell.md) section 10 |
 | What a unit of work passes before it is done | [`docs/methodology/gate.md`](docs/methodology/gate.md) |

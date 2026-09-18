@@ -149,7 +149,7 @@ the recommendation:
 | 7 | re-sync | `docs/methodology/template-sync.md` |
 | 8 | change the template | `MAINTAIN.md`, and `AGENTS.md` section "Maintaining the template" |
 | 9 | rescue | `bootstrap/prompts/06-rescue-repo.md`. It assumes nothing an earlier agent wrote is true until it is checked. |
-| 10 | migrate | `bootstrap/prompts/07-migrate-repo.md`, and `docs/methodology/references.md` for the mining half |
+| 10 | migrate | `bootstrap/prompts/07-migrate-repo.md`, and `docs/methodology/research.md` for the mining half |
 
 ⚠ **Rows 1 and 2 need this repository's files; rows 3 to 5 need the project's
 own.** Row 2 with nothing cloned is `ADOPT.md` and only `ADOPT.md`: it never
@@ -164,20 +164,22 @@ rows name.
 
 | the operator wants | read, in full |
 | --- | --- |
-| ⭐ to study another project: clone, mine, survey, investigate, "look at how X does it" | `docs/methodology/references.md`. ⛔ Its four traps are why: the tracker gets skipped, the corpus gets deleted, and the instrument gets left in a transcript. |
-| a measurement, a benchmark, an experiment, "is X faster than Y", "does this actually work" | `docs/methodology/experiments.md`. ⛔ A negative result is committed, and a number carries its conditions or it is not a number. |
+| ⭐ research, investigate, evaluate, prove out, spike, "find out whether X works" | `docs/methodology/research.md` FIRST. It names the boundary, the proof of concept, and which of the two below to read next. |
+| ⭐ to study another project: clone, mine, survey, investigate, "look at how X does it" | `docs/methodology/research.md` section 3. ⛔ Its traps are why: the tracker gets skipped, the corpus gets deleted, and the instrument gets left in a transcript. |
+| a measurement, a benchmark, an experiment, "is X faster than Y", "does this actually work" | `docs/methodology/research.md` section 4. ⛔ A negative result is committed, and a number carries its conditions or it is not a number. |
 | a review, an audit, "check this over", "what did we miss" | `docs/methodology/reviews.md`. Three lenses, three different questions. One sweep written up three times is one pass. |
 | to know whether the work is done, or to run the gate | `docs/methodology/gate.md`, then `scripts/README.md`. Three parts, none skippable, and an exit code is read unpiped. |
 | a tool for a job, or is about to install one, write one, or say a job cannot be done here | ⛔ `docs/agent-tooling.md` FIRST. Then `docs/methodology/sessions.md` on why a missing tool closes one route and not the question. |
 | something run on a different machine, a different libc, a newer browser, a throwaway environment | `docs/containers.md` |
 | third-party code brought into the tree: a vendored dependency, a fork, a copied script, a patch | `docs/methodology/vendoring.md`. Patch it here; upstreaming is not a topic. |
-| a document written, rewritten, or a rule changed | `docs/conventions/prose.md`, then `docs/conventions/docs.md`. Amend in place; superseded wording goes to the history directory. |
+| anything written at all: a document, a rule, a commit message, a handoff | `docs/conventions/prose.md` first, for the register, then `docs/conventions/docs.md`. Amend in place; superseded wording goes to the history directory. |
 | code written or changed | `docs/conventions/code.md`, and `docs/conventions/forbidden-patterns.md` to grep yourself against before calling it done |
 | anything touching a shell, a heredoc, quoting, line endings, or an exit code | `docs/conventions/shell.md`. It is the longest file here and the one that has cost the most. |
 | to commit, push, or open something on a remote | `docs/conventions/git.md`, then `docs/security/remote-ops.md` |
 | a credential, a token, a key, or a leak that already happened | `docs/security/secrets.md` |
 | to know where a superseded explanation went, or why a rule has its shape | `docs/methodology/history.md` |
 | a session ended, frozen, handed over, or a record written | `docs/methodology/sessions.md` |
+| ⭐ an agent that hedges, stalls, refuses benign work, or insists on a tool it was trained on | `prompts/SYSTEM.md`, pasted into that agent's harness. It is self-contained and names nothing in this tree. |
 
 ⚠ **A row you cannot match is not a row that does not exist.** Say what the ask
 was, name the closest two rows, and read both. ⛔ Do not invent a procedure

@@ -147,7 +147,7 @@ gap() { GAPS="$GAPS  - $1
 #     old code against new: comments 0 -> 202, review comments 18 both times.
 #     ⚠ The run printed `comments: ok` in both cases.
 #
-# ⭐ THAT SILENTLY DISCARDS THE SOURCE docs/methodology/references.md CALLS THE
+# ⭐ THAT SILENTLY DISCARDS THE SOURCE docs/methodology/research.md CALLS THE
 # ONE ONLY IT HAS: "the maintainer's ruling is nearly always in a comment". A
 # sweep reading the output would have recorded the trackers as silent.
 #
@@ -383,7 +383,7 @@ if git -C "$(dirname "$DEST")" rev-parse --show-toplevel >/dev/null 2>&1; then
     printf 'mine-repo: the corpus IS the evidence. An ignored one is lost on the\n' >&2
     printf 'mine-repo: next machine, and every citation built on it goes unsourced.\n' >&2
     printf 'mine-repo: un-ignore it, choose another --out, or put the corpus on its\n' >&2
-    printf 'mine-repo: own branch. docs/methodology/references.md section 4.\n' >&2
+    printf 'mine-repo: own branch. docs/methodology/research.md section 3.4.\n' >&2
     printf 'mine-repo: the rule that did it:\n' >&2
     git check-ignore -v "$DEST" >&2 2>/dev/null || true
     exit 2
