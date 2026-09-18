@@ -36,6 +36,30 @@ Read this before the findings, not after.
   describes the shape of text that shipped. Whether that shape produces better
   behaviour is a claim this sweep cannot make, because it had no way to run a
   model against a variant and compare.
+- ⛔ **In particular, nothing here says the prompt holds up on a weaker model or
+  at a lower reasoning effort, and there is reason to think it does not.** Its
+  central mechanisms all SPEND capability: enumerate three candidates, test each
+  to refute, read rather than search, then make a second pass for what the first
+  missed. A low-effort configuration is one that has been told to spend less,
+  so the prompt is pushing against the setting rather than compensating for it.
+  ⚠ One of the references states the same thing from experience: it routes
+  small models to a separate document because several of its rules **invert** at
+  that scale. ⭐ **That line was read during this sweep and not acted on**, and
+  the prompt still has no low-capability section.
+- ⚠ **The split that is worth expecting, until somebody measures it.** The rules
+  that are REFUSALS cost almost nothing and should survive down the curve: do
+  not claim work you did not do, read the exit code unpiped, invent no number,
+  report the worse verdict, say what you did not cover. The rules that require
+  GENERATION do not: enumerating three candidates is cheap, and enumerating
+  three GOOD ones is the whole problem. ⛔ A model that cannot find the
+  non-obvious cause will not find it by being told to keep looking; it will
+  spend more tokens arriving somewhere wrong.
+- ⛔ **And the procedure carries a new risk at low capability that the first
+  draft did not defend against**: producing the SHAPE of the discipline with
+  none of its substance, three candidates and three verdicts, all wrong, now
+  wearing the format of an audit. The prompt now says to declare that the
+  procedure could not be run rather than perform it, which is the only defence a
+  prompt can offer here, because it is a refusal rather than a capability.
 - **No adversarial reading.** The corpus is a third-party collection of
   material its publishers did not release. Whether each file is genuine, whole
   and current was not verified, and a fabricated or edited entry would be
