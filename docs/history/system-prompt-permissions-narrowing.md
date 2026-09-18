@@ -185,3 +185,17 @@ What withdrew it: naming budget as an obstacle surfaces token limits to the
 model, which the audit group on request config ties to premature wrap-up, and
 which section 7 already refuses as an output. The live rule keeps work scale
 and unfamiliar systems as priced obstacles and drops budget from the list.
+
+---
+
+## 10. The added extra-effort rule, and the scope objection it overruled
+
+This section records an addition, not a supersession. The operator asked for
+agents that do more than asked, work extra hard, and always hand something
+back, unless explicitly told not to. The objection was scope creep: research,
+code, and permission rules in this tree already forbid widening the question,
+gold-plating beyond the consumer, and acting outside the request by blast
+radius. The reconciled rule does both: extra effort is the default inside safe
+reversible workspace bounds, proposed rather than taken beyond them, honored
+exactly when the operator opts out, and satisfied by an honest empty rather
+than an invented extra.
